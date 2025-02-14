@@ -1,8 +1,9 @@
 import app from './app';
 import connectDB from './config/database.config';
+import config from './config/env.config';
 
-const PORT = 5000;
-const HOSTNAME = '0.0.0.0';
+const PORT = config.port || 8080;
+const HOSTNAME = config.hostname;
 
 let server: any;
 connectDB().then(async () => {

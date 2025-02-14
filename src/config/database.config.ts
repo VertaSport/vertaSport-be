@@ -1,11 +1,12 @@
 import mongoose, { ConnectOptions, Error } from 'mongoose';
+import config from './env.config';
 
 mongoose.set('strictQuery', true);
 
 // Connecting to MongoDB(Connecting to the Database)
 export const connectDB = () => {
     // mongoose.connect return promise
-    mongoose.connect('mongodb://localhost:27017/vertasport');
+    mongoose.connect(config.mongoose.url, { dbName: config.mongoose.options.dbName } as ConnectOptions);
 
     // @event connected: Emitted when this connection successfully connects to the db. May be emitted multiple times in reconnected scenarios
     mongoose.connection.on('connected', () => {
@@ -33,7 +34,8 @@ export const connectDB = () => {
         console.log('Trying to reconnect to Mongo ...');
 
         setTimeout(() => {
-            mongoose.connect('mongodb://localhost:27017/vertasport', {
+            mongoose.connect(config.mongoose.url, {
+                dbName: config.mongoose.options.dbName,
                 socketTimeoutMS: 3000,
                 connectTimeoutMS: 3000,
             } as ConnectOptions);
@@ -48,7 +50,7 @@ export const connectDB = () => {
         });
     });
 
-    return mongoose.connect('mongodb://localhost:27017/vertasport');
+    return mongoose.connect(config.mongoose.url, { dbName: config.mongoose.options.dbName });
 };
 
 export default connectDB;
