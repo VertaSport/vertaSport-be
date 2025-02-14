@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { ROLE } from '@/constant/allowedRoles';
+import { IUserSchema } from '@/interfaces/schema/user';
 
 const UserSchema = new mongoose.Schema(
     {
@@ -27,6 +28,8 @@ const UserSchema = new mongoose.Schema(
         },
         avatar: {
             type: String,
+            default:
+                'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg',
         },
         avatarRef: {
             type: String,
@@ -38,9 +41,8 @@ const UserSchema = new mongoose.Schema(
         role: {
             type: String,
             default: ROLE.USER,
-            enum: [ROLE.USER, ROLE.ADMIN, ROLE.SUPER_ADMIN],
+            enum: [ROLE.USER, ROLE.ADMIN],
         },
-        wishList: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: [] }],
     },
     {
         timestamps: true,
@@ -50,7 +52,7 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.pre('save', async function (next) {
     if (this.isNew || this.isModified('password')) {
-        await mongoose.model('Cart').create({ userId: this._id });
+        // await mongoose.model('Cart').create({ userId: this._id });
         const saltRounds = 10;
         this.password = await bcrypt.hash(this.password, saltRounds);
     }
@@ -63,6 +65,6 @@ UserSchema.methods.toJSON = function () {
     return obj;
 };
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model<IUserSchema>('User', UserSchema);
 
 export default User;

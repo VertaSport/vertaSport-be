@@ -2,11 +2,18 @@ import 'dotenv/config';
 import z from 'zod';
 
 const envVarsSchema = z.object({
+    // SERVER
     PORT: z.coerce.number().default(8000),
     HOSTNAME: z.string().default('127.0.0.1'),
     MONGODB_URL_DEV: z.string().describe('Local Mongo DB'),
+    // TOKEN
     JWT_ACCESS_TOKEN_KEY: z.string().min(1, { message: 'JWT Access Token Key là bắt buộc' }),
+    JWT_VERIFY_TOKEN_KEY: z.string().min(1, { message: 'JWT Access Token Key là bắt buộc' }),
+    JWT_VERIFY_EXPIRATION: z.string().default('5m'),
     JWT_ACCESS_EXPIRATION: z.string().default('15m'),
+    // NODEMAILER
+    EMAIL_USER: z.string().email(),
+    EMAIL_PASSWORD: z.string().min(3),
 });
 
 const result = envVarsSchema.safeParse(process.env);
@@ -30,7 +37,13 @@ const config = {
     },
     jwt: {
         accessTokenKey: envVars.JWT_ACCESS_TOKEN_KEY,
-        accessVerifyExpiration: envVars.JWT_ACCESS_EXPIRATION,
+        accessExpiration: envVars.JWT_ACCESS_EXPIRATION,
+        verifyTokenKey: envVars.JWT_VERIFY_TOKEN_KEY,
+        verifyExpiration: envVars.JWT_VERIFY_EXPIRATION,
+    },
+    nodeMailer: {
+        email: envVars.EMAIL_USER,
+        password: envVars.EMAIL_PASSWORD,
     },
 };
 
