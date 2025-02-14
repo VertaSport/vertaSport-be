@@ -6,12 +6,14 @@ import express, { Express } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { corsOptions } from './config/cors.config';
+import { v2 as cloudinary } from 'cloudinary';
 import errorHandler from './middlewares/errorHandlerMiddleware';
 import notFoundHandler from './middlewares/notFoundHandlerMiddleware';
 import router from './routes';
+import cloudinaryConfig from './config/cloudinary.config';
 
 const app: Express = express();
-
+cloudinary.config(cloudinaryConfig);
 app.use(cors(corsOptions));
 app.use(morgan('dev'));
 app.use(helmet());

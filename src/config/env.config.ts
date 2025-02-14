@@ -11,6 +11,10 @@ const envVarsSchema = z.object({
     JWT_VERIFY_TOKEN_KEY: z.string().min(1, { message: 'JWT Access Token Key là bắt buộc' }),
     JWT_VERIFY_EXPIRATION: z.string().default('5m'),
     JWT_ACCESS_EXPIRATION: z.string().default('15m'),
+    // FIREBASE
+    CLOUDINARY_API_KEY: z.string().describe('CLOUDINARY Api Key'),
+    CLOUDINARY_CLOUD_NAME: z.string().describe('CLOUDINARY cloud name'),
+    CLOUDINARY_API_SECRET: z.string().describe('CLOUDINARY api secret'),
     // NODEMAILER
     EMAIL_USER: z.string().email(),
     EMAIL_PASSWORD: z.string().min(3),
@@ -40,6 +44,11 @@ const config = {
         accessExpiration: envVars.JWT_ACCESS_EXPIRATION,
         verifyTokenKey: envVars.JWT_VERIFY_TOKEN_KEY,
         verifyExpiration: envVars.JWT_VERIFY_EXPIRATION,
+    },
+    cloudinaryConfig: {
+        cloudName: envVars.CLOUDINARY_CLOUD_NAME,
+        apiKey: envVars.CLOUDINARY_API_KEY,
+        apiSecret: envVars.CLOUDINARY_API_SECRET,
     },
     nodeMailer: {
         email: envVars.EMAIL_USER,

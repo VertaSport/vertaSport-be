@@ -1,74 +1,76 @@
-import { deleteObject, getDownloadURL, getStorage, listAll, ref, uploadBytesResumable } from 'firebase/storage';
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 import { getCurrentDateTime } from './datetime';
-import { addAbortSignal } from 'stream';
 
-export const uploadFiles = async (files: Express.Multer.File[], folder?: string) => {
+const generateUniqueId = () => `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+export const uploadSingleFile = async (
+    file: Express.Multer.File,
+    folder?: string,
+): Promise<{ downloadURL: string; urlRef: string; originNames: string[] }> => {
     const dateTime = getCurrentDateTime();
-    const storage = getStorage();
-    const fileUrls: string[] = [];
-    const fileUrlRefs: string[] = [];
-    const originNames: string[] = [];
+    const uniqueId = generateUniqueId();
 
-    for (let i = 0; i < files.length; i++) {
-        const storageRef = ref(storage, `files/${files[i].originalname}/${dateTime}`);
-        const urlRef = `files/${files[i]?.originalname}/${dateTime}`;
-        fileUrlRefs.push(urlRef);
-        originNames.push(files[i].originalname);
-        // Create file metadata including the content type
-        const metadata = {
-            contentType: files[i]?.mimetype,
-        };
-        // Upload the file in the bucket storage
-        const snapshot = await uploadBytesResumable(storageRef, files[i]?.buffer, metadata);
-        //by using uploadBytesResumable we can control the progress of uploading like pause, resume, cancel
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        fileUrls.push(downloadURL);
-    }
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: folder || 'uploads',
+                resource_type: 'auto',
+                public_id: `${file.originalname}-${dateTime}-${uniqueId}`,
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                if (!result) return reject(new Error('Upload failed'));
 
-    return { fileUrls, fileUrlRefs, originNames };
+                resolve({
+                    downloadURL: result.secure_url,
+                    urlRef: result.public_id,
+                    originNames: [file.originalname],
+                });
+            },
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+    });
 };
 
-export const uploadSingleFile = async (file: any, folder?: string) => {
-    const dateTime = getCurrentDateTime();
-    const storage = getStorage();
-
-    const storageRef = ref(storage, `${folder}/${file.originalname}/${dateTime}`);
-    const urlRef = `${folder}/${file.originalname}/${dateTime}`;
-    const metadata = {
-        contentType: file.mimetype,
-    };
-    // Upload the file in the bucket storage
-    const snapshot = await uploadBytesResumable(storageRef, file?.buffer, metadata);
-    //by using uploadBytesResumable we can control the progress of uploading like pause, resume, cancel
-    const downloadURL = await getDownloadURL(snapshot.ref);
-
-    return { downloadURL, urlRef };
-};
-
-export const getListAllFilesStorage = async (folderName: string) => {
-    const storage = getStorage();
-    const storageRef = ref(storage, folderName);
+export const uploadFiles = async (
+    files: Express.Multer.File[],
+    folder?: string,
+): Promise<{ fileUrls: string[]; fileUrlRefs: string[]; originNames: string[] }> => {
     try {
-        const res = await listAll(storageRef);
-        const urls = await Promise.all(res.items.map((itemRef) => getDownloadURL(itemRef)));
-        return urls;
+        const uploadedFiles = await Promise.all(files.map((file) => uploadSingleFile(file, folder)));
+
+        return {
+            fileUrls: uploadedFiles.map((file) => file.downloadURL),
+            fileUrlRefs: uploadedFiles.map((file) => file.urlRef),
+            originNames: uploadedFiles.map((file) => file.originNames[0]),
+        };
+    } catch (error) {
+        console.error('Error uploading multiple files:', error);
+        throw error;
+    }
+};
+
+export const getListAllFilesStorage = async (folderName: string): Promise<string[]> => {
+    try {
+        const result = await cloudinary.api.resources({
+            type: 'upload',
+            prefix: folderName,
+        });
+
+        return result.resources.map((file) => file.secure_url);
     } catch (error) {
         console.error('Error listing files:', error);
+        return [];
     }
 };
 
-export const removeUploadedFile = async (urlRef?: string) => {
-    const storage = getStorage();
-
-    // Create a reference to the file to delete
-    const desertRef = ref(storage, urlRef);
-
-    deleteObject(desertRef)
-        .then(() => {
-            // File deleted successfully
-            console.log(`File deleted successfully`);
-        })
-        .catch((error) => {
-            console.log(error);
-        });
+export const removeUploadedFile = async (publicId: string): Promise<void> => {
+    try {
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`File ${publicId} deleted successfully`);
+    } catch (error) {
+        console.error('Error deleting file:', error);
+    }
 };
