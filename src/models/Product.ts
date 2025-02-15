@@ -23,6 +23,7 @@ const ProductSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        sold: { type: Number, default: 0 },
         isDeleted: { type: Boolean, default: false },
         isHide: { type: Boolean, default: false },
         type: {

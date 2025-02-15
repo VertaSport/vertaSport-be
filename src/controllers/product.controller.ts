@@ -8,6 +8,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';
 
+// Create a new product
 export const createProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const dto: ICreateProduct = {
         name: 'Sample Product',
@@ -34,20 +35,47 @@ export const createProduct = asyncHandler(async (req: Request, res: Response, ne
     );
 });
 
+// Create a new variant
 export const createVariant = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const dto: ICreateVariant = {
-        items: [
-            {
-                image: 'https://sample.com/image.jpg',
-                imageRef: 'https://sample.com/image.jpg',
-                size: new mongoose.Types.ObjectId().toString(),
-                stock: 10,
-                sold: 0,
-            },
-        ],
-        color: new mongoose.Types.ObjectId().toString(),
-    };
-    await productService.createVariant(dto);
+    const dto: ICreateVariant[] = [
+        {
+            items: [
+                {
+                    image: 'https://sample.com/image.jpg',
+                    imageRef: 'https://sample.com/image.jpg',
+                    size: new mongoose.Types.ObjectId().toString(),
+                    stock: 10,
+                    sold: 0,
+                },
+            ],
+            color: new mongoose.Types.ObjectId().toString(),
+        },
+        {
+            items: [
+                {
+                    image: 'https://sample.com/image.jpg',
+                    imageRef: 'https://sample.com/image.jpg',
+                    size: new mongoose.Types.ObjectId().toString(),
+                    stock: 10,
+                    sold: 0,
+                },
+            ],
+            color: new mongoose.Types.ObjectId().toString(),
+        },
+        {
+            items: [
+                {
+                    image: 'https://sample.com/image.jpg',
+                    imageRef: 'https://sample.com/image.jpg',
+                    size: new mongoose.Types.ObjectId().toString(),
+                    stock: 10,
+                    sold: 0,
+                },
+            ],
+            color: new mongoose.Types.ObjectId().toString(),
+        },
+    ];
+    await productService.createMultipleVariants(dto);
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: null,
@@ -58,6 +86,7 @@ export const createVariant = asyncHandler(async (req: Request, res: Response, ne
     );
 });
 
+// Get all products client
 export const getAllProductsClient = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const query: QueryString = { isDeleted: false, isHide: false, ...req.query };
     const page = req.query.page ? +req.query.page : 1;
@@ -75,6 +104,75 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
 
     delete query.size;
     delete query.color;
+
+    const products = await productService.getAllProducts(query);
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: products,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
+// Get all products admin
+export const getAllProductsAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const query: QueryString = { isDeleted: false, ...req.query };
+    const page = req.query.page ? +req.query.page : 1;
+    const limit = req.query.limit || 10;
+    const filterSize = req.query.size ? (req.query.size as string).split(',') : null;
+    const filterColor = req.query.color ? (req.query.color as string).split(',') : null;
+
+    query.page = String(page);
+    query.limit = String(limit);
+    query.filterSize = filterSize;
+    query.filterColor = filterColor;
+
+    if (query.filterSize === null) delete query.filterSize;
+    if (query.filterColor === null) delete query.filterColor;
+
+    delete query.size;
+    delete query.color;
+
+    const products = await productService.getAllProducts(query);
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: products,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
+// Get 10 product best selling
+export const Top10BestSelling = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const query: QueryString = { isDeleted: false, isHide: false, sort: '-sold' };
+    const limit = 10;
+
+    query.limit = String(limit);
+
+    const products = await productService.getAllProducts(query);
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: products,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
+// Get 10 newest product
+export const get10Newest = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const query: QueryString = { isDeleted: false, isHide: false, sort: '-createdAt' };
+    const limit = 10;
+
+    query.limit = String(limit);
 
     const products = await productService.getAllProducts(query);
 

@@ -8,7 +8,6 @@ const VariantSchema = new mongoose.Schema(
                 imageRef: { type: String, required: true },
                 size: { type: mongoose.Schema.Types.ObjectId },
                 stock: { type: Number, required: true },
-                sold: { type: Number, default: 0 },
             },
         ],
         color: { type: mongoose.Schema.Types.ObjectId, required: true },

@@ -2,7 +2,6 @@ import APIQuery, { QueryString } from '@/helpers/apiQuery';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { ICreateProduct, ICreateVariant } from '@/types/product';
-import { Document, Query } from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct) => {
     const product = new Product(dto);
@@ -12,6 +11,10 @@ export const createProduct = async (dto: ICreateProduct) => {
 export const updateProduct = async (id: string, dto: any) => {
     const product = await Product.findByIdAndUpdate(id, dto);
     return product;
+};
+export const deleteProduct = async (id: string) => {
+    await Product.findByIdAndUpdate(id, { isDeleted: true });
+    return null;
 };
 
 export const getAllProducts = async (queryString: QueryString) => {
@@ -24,7 +27,7 @@ export const getAllProducts = async (queryString: QueryString) => {
     };
 };
 
-export const createVariant = async (dtos: ICreateVariant) => {
+export const createMultipleVariants = async (dtos: ICreateVariant[]) => {
     const variants = await Variant.insertMany(dtos);
     return variants;
 };
