@@ -3,7 +3,7 @@ import e from 'express';
 import { toLower } from 'lodash';
 import mongoose, { Query, Document } from 'mongoose';
 
-interface QueryString {
+export interface QueryString {
     [key: string]: any;
     page?: string;
     sort?: string;
