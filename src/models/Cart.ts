@@ -6,9 +6,9 @@ const cartSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             required: true,
         },
-        items: [
-            {
-                type: {
+        items: {
+            type: [
+                {
                     product: {
                         type: mongoose.Schema.Types.ObjectId,
                         required: true,
@@ -22,11 +22,10 @@ const cartSchema = new mongoose.Schema(
                         required: true,
                         min: 1,
                     },
-                    _id: false,
                 },
-                default: [],
-            },
-        ],
+            ],
+            default: [],
+        },
     },
     {
         versionKey: false,

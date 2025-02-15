@@ -2,14 +2,10 @@ import mongoose from 'mongoose';
 
 const VariantSchema = new mongoose.Schema(
     {
-        items: [
-            {
-                image: { type: String, required: true },
-                imageRef: { type: String, required: true },
-                size: { type: mongoose.Schema.Types.ObjectId },
-                stock: { type: Number, required: true },
-            },
-        ],
+        image: { type: String, required: true },
+        imageRef: { type: String, required: true },
+        size: { type: mongoose.Schema.Types.ObjectId },
+        stock: { type: Number, required: true },
         color: { type: mongoose.Schema.Types.ObjectId, required: true },
     },
     {
