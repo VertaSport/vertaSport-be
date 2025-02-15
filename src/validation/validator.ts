@@ -1,19 +1,22 @@
-import { BadRequestError } from '@/error/customError';
-import { NextFunction } from 'express';
-import Joi from 'joi';
+import { BadRequestFormError } from '@/error/customError';
+import { Request, Response, NextFunction } from 'express';
+import { ZodSchema } from 'zod';
 
-const validator = async (schemaName: Joi.ObjectSchema, body: object, next: NextFunction) => {
-    const value = schemaName.validate(body, {
-        abortEarly: false, // include all errors
-        allowUnknown: true, // ignore unknown props
-        stripUnknown: true, // remove unknown props
-    });
-
-    try {
-        value.error ? next(new BadRequestError(value.error.details[0].message)) : next();
-    } catch (error) {
-        console.log(error);
-    }
+const validator = (schema: ZodSchema) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const result = schema.safeParse(req.body);
+        if (!result.success) {
+            const errors = Object.entries(result.error.format())
+                .filter(([field]) => field !== '_errors')
+                .map(([field, issue]) => ({
+                    message: Array.isArray(issue) ? issue[0] : (issue as any)?._errors?.[0] || 'Lỗi không xác định',
+                    field,
+                }));
+            throw new BadRequestFormError('Đã có lỗi xảy ra!', errors);
+        }
+        req.body = result.data;
+        next();
+    };
 };
 
 export default validator;

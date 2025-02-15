@@ -7,14 +7,11 @@ const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
-            return cb(new BadRequestError('Chỉ chấp nhận nhưng file có đuôi là JPG, JPEG, và PNG!'));
+            return cb(new BadRequestError('Chỉ chấp nhận những file có đuôi là JPG, JPEG, PNG hoặc WEBP!'));
         }
-        if (file.size > 5 * 1024 * 1024) {
-            return cb(new BadRequestError('Dung lượng file phải bé hơn 5MB!'));
-        }
-
         cb(null, true);
     },
+    limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 export default upload;
