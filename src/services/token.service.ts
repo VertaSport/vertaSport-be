@@ -2,9 +2,9 @@ import config from '@/config/env.config';
 import { tokenTypes } from '@/constant/token';
 import { NotAcceptableError } from '@/error/customError';
 import Token from '@/models/Token';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
-export const generateToken = (user: any, key: string, expires: string) => {
+export const generateToken = (user: any, key: string, expires: SignOptions['expiresIn']) => {
     const payload = { userId: user._id, role: user.role };
     const secreteKey = key;
     return jwt.sign(payload, secreteKey, { expiresIn: expires });

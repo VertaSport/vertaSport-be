@@ -1,4 +1,4 @@
 export enum SizeEnum {
-    FreeSize = 'free_size',
-    NumericSize = 'NumericSize',
+    FreeSize = 'freesize',
+    NumericSize = 'numericsize',
 }

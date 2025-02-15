@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { SignOptions } from 'jsonwebtoken';
 import z from 'zod';
 
 const envVarsSchema = z.object({
@@ -41,9 +42,9 @@ const config = {
     },
     jwt: {
         accessTokenKey: envVars.JWT_ACCESS_TOKEN_KEY,
-        accessExpiration: envVars.JWT_ACCESS_EXPIRATION,
+        accessExpiration: envVars.JWT_ACCESS_EXPIRATION as SignOptions['expiresIn'],
         verifyTokenKey: envVars.JWT_VERIFY_TOKEN_KEY,
-        verifyExpiration: envVars.JWT_VERIFY_EXPIRATION,
+        verifyExpiration: envVars.JWT_VERIFY_EXPIRATION as SignOptions['expiresIn'],
     },
     cloudinaryConfig: {
         cloudName: envVars.CLOUDINARY_CLOUD_NAME,

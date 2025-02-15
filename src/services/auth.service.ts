@@ -26,7 +26,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     }
     const newUser = await User.create({ ...req.body });
     const token = await generateToken(newUser, config.jwt.verifyTokenKey, config.jwt.verifyExpiration);
-    await saveToken(token, newUser._id, tokenTypes.VERIFY_EMAIL);
+    await saveToken(token, newUser._id.toString(), tokenTypes.VERIFY_EMAIL);
     const contentEmail = {
         subject: '[VERTASPORT] - Kích Hoạt Tài Khoản',
         content: {
@@ -94,7 +94,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const sendMailverifyAccount = async (req: Request, res: Response, next: NextFunction) => {
     const checkedEmail = await User.findOne({ email: req.body.email });
     if (checkedEmail?.isActive) {
-        await deleteToken(checkedEmail._id, tokenTypes.VERIFY_EMAIL);
+        await deleteToken(checkedEmail._id.toString(), tokenTypes.VERIFY_EMAIL);
         throw new BadRequestFormError('Có lỗi xảy ra', {
             message: 'Tài khoản này đã được kích hoạt',
             field: 'email',
@@ -106,9 +106,9 @@ export const sendMailverifyAccount = async (req: Request, res: Response, next: N
             field: 'email',
         });
     }
-    await deleteToken(checkedEmail._id, tokenTypes.VERIFY_EMAIL);
+    await deleteToken(checkedEmail._id.toString(), tokenTypes.VERIFY_EMAIL);
     const newToken = await generateToken(checkedEmail, config.jwt.verifyTokenKey, config.jwt.verifyExpiration);
-    await saveToken(newToken, checkedEmail._id, tokenTypes.VERIFY_EMAIL);
+    await saveToken(newToken, checkedEmail._id.toString(), tokenTypes.VERIFY_EMAIL);
     const contentEmail = {
         subject: '[VERTASPORT] - Kích Hoạt Tài Khoản',
         content: {

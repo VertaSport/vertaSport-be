@@ -1,24 +1,35 @@
 import APIQuery, { QueryString } from '@/helpers/apiQuery';
 import Product from '@/models/Product';
-import { Request, Response } from 'express';
+import Variant from '@/models/Variant';
+import { ICreateProduct, ICreateVariant } from '@/types/product';
 import { Document, Query } from 'mongoose';
 
-export const create = async (dto: any) => {
+export const createProduct = async (dto: ICreateProduct) => {
     const product = new Product(dto);
     await product.save();
     return product;
 };
-export const update = async (id: string, dto: any) => {
+export const updateProduct = async (id: string, dto: any) => {
     const product = await Product.findByIdAndUpdate(id, dto);
     return product;
 };
 
-export const getAll = async (query: Query<Document[], Document>, queryString: QueryString) => {
-    const features = new APIQuery(query, queryString);
+export const getAllProducts = async (queryString: QueryString) => {
+    const features = new APIQuery(Product.find(), queryString);
     features.filter().sort().limitFields().search().paginate();
     const [data, totalDocs] = await Promise.all([features.query, features.count()]);
     return {
         data,
         totalDocs,
     };
+};
+
+export const createVariant = async (dtos: ICreateVariant) => {
+    const variants = await Variant.insertMany(dtos);
+    return variants;
+};
+
+export const updateVariant = async (id: string, dto: any) => {
+    const variant = await Variant.findByIdAndUpdate(id, dto);
+    return variant;
 };
