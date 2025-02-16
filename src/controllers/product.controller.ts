@@ -1,10 +1,8 @@
-import { SizeEnum } from '@/constant/sizeType';
-import { BadRequestError } from '@/error/customError';
 import { QueryString } from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
 import { productService } from '@/services';
-import { ICreateProduct, ICreateVariant } from '@/types/product';
+import { ICreateProduct } from '@/types/product';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';

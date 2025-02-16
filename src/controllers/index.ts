@@ -2,3 +2,6 @@ export * as authController from './auth.controller';
 export * as productController from './product.controller';
 export * as uploadController from './upload.controller';
 export * as cartController from './cart.controller';
+export * as colorController from './color.controller';
+export * as sizeController from './size.controller';
+export * as cateController from './category.controller';
