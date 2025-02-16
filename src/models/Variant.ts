@@ -1,12 +1,20 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
-const VariantSchema = new mongoose.Schema(
+export interface IVariantSchema extends Document {
+    image: string;
+    imageRef: string;
+    size?: Types.ObjectId;
+    stock: number;
+    color: Types.ObjectId;
+}
+
+const VariantSchema = new Schema<IVariantSchema>(
     {
         image: { type: String, required: true },
         imageRef: { type: String, required: true },
-        size: { type: mongoose.Schema.Types.ObjectId },
+        size: { type: Schema.Types.ObjectId, ref: 'Size' },
         stock: { type: Number, required: true },
-        color: { type: mongoose.Schema.Types.ObjectId, required: true },
+        color: { type: Schema.Types.ObjectId, ref: 'Color', required: true },
     },
     {
         timestamps: true,
@@ -14,6 +22,5 @@ const VariantSchema = new mongoose.Schema(
     },
 );
 
-const Variant = mongoose.model('Variant', VariantSchema);
-
+const Variant = mongoose.model<IVariantSchema>('Variant', VariantSchema);
 export default Variant;

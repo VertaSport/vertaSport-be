@@ -1,17 +1,14 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const ColorSchema = new mongoose.Schema(
+export interface IColorSchema extends Document {
+    name: string;
+    hex: string;
+}
+
+const ColorSchema = new Schema<IColorSchema>(
     {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-        hex: {
-            type: String,
-            required: true,
-            trim: true,
-        },
+        name: { type: String, required: true, trim: true },
+        hex: { type: String, required: true, trim: true },
     },
     {
         timestamps: false,
@@ -19,6 +16,5 @@ const ColorSchema = new mongoose.Schema(
     },
 );
 
-const Color = mongoose.model('Color', ColorSchema);
-
+const Color = mongoose.model<IColorSchema>('Color', ColorSchema);
 export default Color;

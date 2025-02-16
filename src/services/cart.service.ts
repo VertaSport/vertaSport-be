@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from '@/error/customError';
 import customResponse from '@/helpers/response';
-import Cart from '@/models/Cart';
+import Cart, { ICartSchema } from '@/models/Cart';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { NextFunction, Request, Response } from 'express';
@@ -36,12 +36,17 @@ export const getCartByUser = async (req: Request, res: Response, next: NextFunct
         .json(customResponse({ data: cartUser, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
 };
 
-// @Add to cart
-export const addToCart = async (req: Request, res: Response, next: NextFunction) => {
-    let updatedCart = null;
-    const { productId, variantId } = req.body;
-    let { quantity } = req.body;
-    const userId = 'test';
+export const validateHandleCart = async ({
+    productId,
+    variantId,
+    quantity,
+    userId,
+}: {
+    productId: string;
+    variantId: string;
+    userId: string;
+    quantity: number;
+}) => {
     const [product, variant, currentCart] = await Promise.all([
         Product.findById(productId).select({ isHide: 1, isDeleted: 1 }).lean(),
         Variant.findById(variantId).select({ stock: 1 }).lean(),
@@ -56,8 +61,29 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
 
     if (quantity > variant.stock!) quantity = variant.stock;
 
+    return { product, variant, currentCart, quantity, userId, productId, variantId };
+};
+
+// @Add to cart
+export const addToCart = async ({
+    currentCart,
+    quantity,
+    variantId,
+    variant,
+    userId,
+    productId,
+}: {
+    currentCart: ICartSchema;
+    variant: { stock: number };
+    quantity: number;
+    variantId: string;
+    userId: string;
+    productId: string;
+}) => {
+    let updatedCart = null;
+
     if (currentCart && currentCart.items.length > 0) {
-        const variantInThisCart = currentCart.items.find((item) => item.variant == variantId);
+        const variantInThisCart = currentCart.items.find((item) => item.variant.toString() == variantId);
         const currentQuantity = variantInThisCart?.quantity || 0;
         const newQuantity = currentQuantity + quantity;
         updatedCart = await Cart.findOneAndUpdate(
@@ -75,14 +101,7 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
         );
     }
 
-    return res.status(StatusCodes.OK).json(
-        customResponse({
-            data: updatedCart,
-            success: true,
-            status: StatusCodes.CREATED,
-            message: ReasonPhrases.CREATED,
-        }),
-    );
+    return updatedCart;
 };
 
 // @Remove one cart item
@@ -115,26 +134,27 @@ export const removeAllCartItems = async (req: Request, res: Response, next: Next
 };
 
 // @Update  cart item quantity
-export const updateCartItemQuantity = async (req: Request, res: Response, next: NextFunction) => {
-    const product = await ProductVariation.findById(req.body.productVariation).select({ stock: 1 }).lean();
-    if (!product) throw new BadRequestError(`Not found product with Id: ${req.body.productVariation}`);
+export const updateCartItemQuantity = async ({
+    quantity,
+    variantId,
+    userId,
+}: {
+    quantity: number;
+    variantId: string;
+    userId: string;
+}) => {
+    // const product = await ProductVariation.findById(req.body.productVariation).select({ stock: 1 }).lean();
+    // if (!product) throw new BadRequestError(`Not found product with Id: ${req.body.productVariation}`);
 
-    if (quantity < 1) throw new BadRequestError(`Quantity must be at least 1`);
-    if (quantity > product.stock!) quantity = product.stock;
+    // if (quantity < 1) throw new BadRequestError(`Quantity must be at least 1`);
+    // if (quantity > product.stock!) quantity = product.stock;
 
     const updatedQuantity = await Cart.findOneAndUpdate(
-        { userId: req.body.userId, 'items.productVariation': req.body.productVariation },
+        { userId, 'items.variant': variantId },
         { $set: { 'items.$.quantity': quantity } },
         { new: true },
     );
-    if (!updatedQuantity)
-        throw new BadRequestError(
-            `Not found product with Id: ${req.body.productVariation} inside this cart or cart not found`,
-        );
+    if (!updatedQuantity) throw new BadRequestError(`Not found product `);
 
-    return res
-        .status(StatusCodes.OK)
-        .json(
-            customResponse({ data: updatedQuantity, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }),
-        );
+    return updatedQuantity;
 };

@@ -1,12 +1,12 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const SubCategorySchema = new mongoose.Schema(
+export interface ISubCategorySchema extends Document {
+    name: string;
+}
+
+const SubCategorySchema = new Schema<ISubCategorySchema>(
     {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-        },
+        name: { type: String, required: true, trim: true },
     },
     {
         timestamps: false,
@@ -14,6 +14,5 @@ const SubCategorySchema = new mongoose.Schema(
     },
 );
 
-const Category = mongoose.model('SubCategory', SubCategorySchema);
-
-export default Category;
+const SubCategory = mongoose.model<ISubCategorySchema>('SubCategory', SubCategorySchema);
+export default SubCategory;
