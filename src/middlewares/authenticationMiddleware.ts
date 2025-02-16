@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 
 export const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization || req.headers.Authorizations;
+    console.log(authHeader);
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return next(new UnAuthenticatedError('Token: Invalidated access!'));

@@ -17,8 +17,8 @@ const cartSchema = new Schema<ICartSchema>(
         items: {
             type: [
                 {
-                    product: { type: mongoose.Schema.Types.ObjectId, required: true },
-                    variant: { type: mongoose.Schema.Types.ObjectId, required: true },
+                    product: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
+                    variant: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Variant' },
                     quantity: { type: Number, required: true, min: 1 },
                 },
             ],

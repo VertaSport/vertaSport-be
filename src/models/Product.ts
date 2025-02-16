@@ -36,7 +36,7 @@ const ProductSchema = new Schema<IProductSchema>(
             hasColor: { type: Boolean },
             sizeType: { type: [String], enum: Object.values(SizeEnum) },
         },
-        variants: [{ type: Schema.Types.ObjectId }],
+        variants: [{ type: Schema.Types.ObjectId, ref: 'Variant' }],
         categories: [{ type: Schema.Types.ObjectId, required: true }],
         filterSize: [{ type: Schema.Types.ObjectId }],
         filterColor: [{ type: Schema.Types.ObjectId }],

@@ -8,7 +8,7 @@ export interface ICategorySchema extends Document {
 const CategorySchema = new Schema<ICategorySchema>(
     {
         name: { type: String, required: true, trim: true },
-        items: [{ type: mongoose.Schema.Types.ObjectId, default: [] }],
+        items: [{ type: mongoose.Schema.Types.ObjectId, default: [] , ref: 'SubCategory' }],
     },
     {
         timestamps: true,
