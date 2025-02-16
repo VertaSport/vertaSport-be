@@ -11,6 +11,7 @@ import errorHandler from './middlewares/errorHandlerMiddleware';
 import notFoundHandler from './middlewares/notFoundHandlerMiddleware';
 import router from './routes';
 import cloudinaryConfig from './config/cloudinary.config';
+import { handleInsertData } from '@/mock';
 
 const app: Express = express();
 cloudinary.config(cloudinaryConfig);
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // routes
 app.use('/api/v1', router);
+app.get('/import-data', handleInsertData);
 
 //error middleware
 app.use(notFoundHandler);

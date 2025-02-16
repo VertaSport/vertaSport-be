@@ -16,6 +16,7 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
+        "@faker-js/faker": "^9.5.0",
         "@types/bcryptjs": "^2.4.6",
         "@types/compression": "^1.7.5",
         "@types/cookie-parser": "^1.4.7",
@@ -61,9 +62,7 @@
         "multer": "^1.4.5-lts.1",
         "nodemailer": "^6.9.14",
         "rimraf": "^5.0.5",
-        "socket.io": "^4.7.5",
         "streamifier": "^0.1.1",
-        "stripe": "^15.5.0",
         "tsc-alias": "^1.8.8",
         "tsconfig-paths": "^4.2.0",
         "zod": "^3.24.2"
