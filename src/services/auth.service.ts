@@ -15,7 +15,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     const fields = [
         { key: 'email', message: 'Email này đã tồn tại!' },
-        { key: 'userName', message: 'Tên người dùng này đã tồn tại!' },
+        { key: 'name', message: 'Tên người dùng này đã tồn tại!' },
     ];
     const results = await Promise.all(fields.map(({ key }) => User.findOne({ [key]: req.body[key] })));
     const errors = fields
