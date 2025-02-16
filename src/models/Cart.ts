@@ -1,6 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
-interface ICartItem {
+export interface ICartItem {
     product: mongoose.Types.ObjectId;
     variant: mongoose.Types.ObjectId;
     quantity: number;

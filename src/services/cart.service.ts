@@ -1,17 +1,11 @@
 import { BadRequestError, NotFoundError } from '@/error/customError';
-import customResponse from '@/helpers/response';
 import Cart, { ICartSchema } from '@/models/Cart';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
-import { NextFunction, Request, Response } from 'express';
-import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 // @Get cart by user
-export const getCartByUser = async (req: Request, res: Response, next: NextFunction) => {
-    const cartUser = await Cart.findOne({ userId: req.params.id })
-        .populate('items.product')
-        .populate('items.variant')
-        .exec();
+export const getCartByUser = async (userId: string) => {
+    const cartUser = await Cart.findOne({ userId }).populate('items.product').populate('items.variant').exec();
 
     if (!cartUser) throw new NotFoundError('Not found cart or cart is not exist.');
 
@@ -31,9 +25,7 @@ export const getCartByUser = async (req: Request, res: Response, next: NextFunct
         return true;
     });
 
-    return res
-        .status(StatusCodes.OK)
-        .json(customResponse({ data: cartUser, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
+    return cartUser;
 };
 
 export const validateHandleCart = async ({
@@ -65,7 +57,7 @@ export const validateHandleCart = async ({
 };
 
 // @Add to cart
-export const addToCart = async ({
+export const addToCart = async <T extends ICartSchema>({
     currentCart,
     quantity,
     variantId,
@@ -73,7 +65,7 @@ export const addToCart = async ({
     userId,
     productId,
 }: {
-    currentCart: ICartSchema;
+    currentCart: T;
     variant: { stock: number };
     quantity: number;
     variantId: string;
@@ -105,33 +97,26 @@ export const addToCart = async ({
 };
 
 // @Remove one cart item
-export const removeCartItem = async (req: Request, res: Response, next: NextFunction) => {
-    const updatedCart = await Cart.findOneAndUpdate(
-        { userId: req.body.userId },
-        { $pull: { items: { productVariation: req.body.productVariation } } },
-        { new: true },
-    );
-    if (!updatedCart) throw new BadRequestError(`Not found cart with userId: ${req.body.userId}`);
-    return res
-        .status(StatusCodes.OK)
-        .json(customResponse({ data: updatedCart, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
+export const removeCartItem = async ({ variantId, userId }: { variantId: string; userId: string }) => {
+    const updatedCart = await Cart.findOneAndUpdate({ userId }, { $pull: { items: { variantId } } }, { new: true });
+    if (!updatedCart) throw new BadRequestError(`Not found cart`);
 };
 
 // @Remove all cart items
-export const removeAllCartItems = async (req: Request, res: Response, next: NextFunction) => {
-    const cart = await Cart.findOneAndUpdate({ userId: req.body.userId }, { items: [] }, { new: true }).lean();
+// export const removeAllCartItems = async (req: Request, res: Response, next: NextFunction) => {
+//     const cart = await Cart.findOneAndUpdate({ userId: req.body.userId }, { items: [] }, { new: true }).lean();
 
-    if (!cart) throw new BadRequestError(`Not found cart with userId: ${req.body.userId}`);
+//     if (!cart) throw new BadRequestError(`Not found cart with userId: ${req.body.userId}`);
 
-    return res.status(StatusCodes.NO_CONTENT).json(
-        customResponse({
-            data: null,
-            success: true,
-            status: StatusCodes.NO_CONTENT,
-            message: ReasonPhrases.NO_CONTENT,
-        }),
-    );
-};
+//     return res.status(StatusCodes.NO_CONTENT).json(
+//         customResponse({
+//             data: null,
+//             success: true,
+//             status: StatusCodes.NO_CONTENT,
+//             message: ReasonPhrases.NO_CONTENT,
+//         }),
+//     );
+// };
 
 // @Update  cart item quantity
 export const updateCartItemQuantity = async ({

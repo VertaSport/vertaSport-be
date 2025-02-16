@@ -16,6 +16,9 @@ export type ICreateProduct = {
 };
 
 export type ICreateVariant = {
-    items: { image: string; imageRef: string; size: string; stock: number; sold: number }[];
+    image: string;
+    imageRef: string;
+    size: string;
+    stock: number;
     color: string;
 };

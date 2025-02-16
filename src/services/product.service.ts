@@ -1,12 +1,25 @@
+import { BadRequestError } from '@/error/customError';
 import APIQuery, { QueryString } from '@/helpers/apiQuery';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { ICreateProduct, ICreateVariant } from '@/types/product';
+import mongoose from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct) => {
-    const product = new Product(dto);
-    await product.save();
-    return product;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const product = new Product(dto);
+        await product.save({ session });
+        await session.commitTransaction();
+        return product;
+    } catch (error) {
+        await Variant.deleteMany({ _id: { $in: dto.variants } });
+        await session.abortTransaction();
+        throw new BadRequestError(error.message);
+    } finally {
+        session.endSession();
+    }
 };
 export const updateProduct = async (id: string, dto: any) => {
     const product = await Product.findByIdAndUpdate(id, dto);

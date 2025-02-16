@@ -1,4 +1,5 @@
 import { SizeEnum } from '@/constant/sizeType';
+import { BadRequestError } from '@/error/customError';
 import { QueryString } from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
@@ -11,18 +12,18 @@ import mongoose from 'mongoose';
 // Create a new product
 export const createProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const dto: ICreateProduct = {
-        name: 'Sample Product',
-        price: 100,
-        summary: 'Sample Description',
-        thumbnail: 'https://sample.com/image.jpg',
-        thumbnailRef: 'https://sample.com/image.jpg',
-        isDeleted: false,
-        isHide: false,
-        type: { hasColor: false, sizeType: SizeEnum.FreeSize },
-        variants: [new mongoose.Types.ObjectId().toString()],
-        categories: [new mongoose.Types.ObjectId().toString()],
-        filterSize: [new mongoose.Types.ObjectId().toString()],
-        filterColor: [new mongoose.Types.ObjectId().toString()],
+        name: req.body.name,
+        price: req.body.price,
+        summary: req.body.summary,
+        thumbnail: req.body.thumbnail,
+        thumbnailRef: req.body.thumbnailRef,
+        isDeleted: req.body.isDeleted || false,
+        isHide: req.body.isHide || false,
+        type: req.body.type,
+        variants: req.body.variants,
+        categories: req.body.categories,
+        filterSize: req.body.filterSize,
+        filterColor: req.body.filterColor,
     };
     await productService.createProduct(dto);
     return res.status(StatusCodes.OK).json(
@@ -37,45 +38,7 @@ export const createProduct = asyncHandler(async (req: Request, res: Response, ne
 
 // Create a new variant
 export const createVariant = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const dto: ICreateVariant[] = [
-        {
-            items: [
-                {
-                    image: 'https://sample.com/image.jpg',
-                    imageRef: 'https://sample.com/image.jpg',
-                    size: new mongoose.Types.ObjectId().toString(),
-                    stock: 10,
-                    sold: 0,
-                },
-            ],
-            color: new mongoose.Types.ObjectId().toString(),
-        },
-        {
-            items: [
-                {
-                    image: 'https://sample.com/image.jpg',
-                    imageRef: 'https://sample.com/image.jpg',
-                    size: new mongoose.Types.ObjectId().toString(),
-                    stock: 10,
-                    sold: 0,
-                },
-            ],
-            color: new mongoose.Types.ObjectId().toString(),
-        },
-        {
-            items: [
-                {
-                    image: 'https://sample.com/image.jpg',
-                    imageRef: 'https://sample.com/image.jpg',
-                    size: new mongoose.Types.ObjectId().toString(),
-                    stock: 10,
-                    sold: 0,
-                },
-            ],
-            color: new mongoose.Types.ObjectId().toString(),
-        },
-    ];
-    await productService.createMultipleVariants(dto);
+    await productService.createMultipleVariants(req.body);
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: null,
