@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { SizeEnum } from '@/constant/sizeType';
 
+
 export interface ISizeSchema extends Document {
     type: SizeEnum;
     value: string;

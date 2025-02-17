@@ -14,5 +14,6 @@ productRouter.get('/best-selling', productController.Top10BestSelling);
 productRouter.get('/newest', productController.get10Newest);
 productRouter.get('/', productController.getAllProductsClient);
 productRouter.get('/:id', productController.getProductDetails);
+productRouter.get('/related/:categoryId', productController.getProductRelated);
 
 export default productRouter;

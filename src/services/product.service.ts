@@ -57,10 +57,16 @@ export const getProductDetails = async (id: string) => {
         .populate({
             path: 'variants',
             select: '-createdAt -updatedAt',
-            populate: {
-                path: 'color',
-                select: '-createdAt -updatedAt',
-            },
+            populate: [
+                {
+                    path: 'color',
+                    select: '-createdAt -updatedAt',
+                },
+                {
+                    path: 'size',
+                    select: '-createdAt -updatedAt -type',
+                },
+            ],
         })
         .select('-type -isDeleted -isHide')
         .lean();
@@ -68,7 +74,7 @@ export const getProductDetails = async (id: string) => {
         product.variants as unknown as {
             image: string;
             imageRef: string;
-            size: Types.ObjectId;
+            size: { _id: Types.ObjectId; value: string };
             stock: number;
             color: IColorRaw & { _id: Types.ObjectId };
         }[]
@@ -86,14 +92,14 @@ export const getProductDetails = async (id: string) => {
             {
                 image: string;
                 imageRef: string;
-                size: Types.ObjectId;
+                size: { _id: Types.ObjectId; value: string };
                 stock: number;
                 color: IColorRaw & { _id: Types.ObjectId };
             }[]
         >,
     );
 
-    const variantsDetails = Object.entries(groupedByColor).map(([color, items]) => ({
+    const variantsDetails = Object.entries(groupedByColor).map(([_, items]) => ({
         color: items[0].color,
         items: items.map((item) => {
             delete item.color;

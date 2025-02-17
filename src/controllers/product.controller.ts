@@ -161,3 +161,17 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
         }),
     );
 });
+// Get product related
+export const getProductRelated = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.categoryId;
+    const product = await productService.getAllProducts({ categories: id, limit: '10' });
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: product,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
