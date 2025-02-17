@@ -140,19 +140,63 @@ export const verifyAccount = async (req: Request, res: Response, next: NextFunct
     jwt.verify(token, config.jwt.verifyTokenKey, async (err: any, decoded: any) => {
         if (err) {
             if (err.name === 'TokenExpiredError') {
-                return next(new UnAuthenticatedError('Mã đã hết hạn'));
+                return res.status(StatusCodes.BAD_REQUEST).json(
+                    customResponse({
+                        data: {
+                            type: 'expired',
+                            title: 'Email xác thực này đã hết hạn',
+                            descriptionOne: 'Mã xác thực mà chúng tôi gửi qua email của bạn đã hết hạn',
+                            descriptionTwo:
+                                'Bạn muốn xác thực lại email hãy ấn nút "gửi lại" để gửi lại email kích hoạt',
+                        },
+                        message: 'Mã hết hạn',
+                        status: StatusCodes.BAD_REQUEST,
+                        success: false,
+                    }),
+                );
             }
             if (err.name === 'JsonWebTokenError') {
-                return next(new UnAuthenticatedError('Mã không hợp lệ'));
+                return res.status(StatusCodes.BAD_REQUEST).json(
+                    customResponse({
+                        data: {
+                            type: 'invalid',
+                            title: 'Email xác thực của bạn không đúng',
+                            descriptionOne: 'Email xác thực mà chúng tôi gửi qua email của bạn bị lỗi',
+                            descriptionTwo:
+                                'Bạn muốn xác thực lại email hãy ấn nút "gửi lại" để gửi lại email kích hoạt',
+                        },
+                        message: 'Mã không hợp lệ',
+                        status: StatusCodes.BAD_REQUEST,
+                        success: false,
+                    }),
+                );
             }
-            return next(new UnAuthenticatedError('Xác thực thất bại vui lòng thử lại!'));
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                customResponse({
+                    data: {
+                        type: 'undefined',
+                        title: 'Có lỗi xảy ra với email xác thực này này',
+                        descriptionOne: 'Email xác thực mà chúng tôi gửi qua email của bạn bị lỗi hoặc sai email',
+                        descriptionTwo: 'Bạn muốn xác thực lại email hãy ấn nút "gửi lại" để gửi lại email kích hoạt',
+                    },
+                    message: 'Không xác định',
+                    status: StatusCodes.BAD_REQUEST,
+                    success: false,
+                }),
+            );
         }
         const { userId } = decoded as JwtPayload;
         await User.findByIdAndUpdate(userId, { isActive: true });
         await deleteToken(userId, tokenTypes.VERIFY_EMAIL);
         return res.status(StatusCodes.ACCEPTED).json(
             customResponse({
-                data: null,
+                data: {
+                    type: 'success',
+                    title: 'Tài khoản của bạn đã được kích hoạt',
+                    descriptionOne: 'Bạn đã kích hoạt tài khoản của bạn thông qua gmail',
+                    descriptionTwo:
+                        'Bạn đã sẵn sàng sử dụng tất cả dịch vụ của chúng tôi ấn nút "Bắt đầu" để bắt đầu trải nghiệm',
+                },
                 status: StatusCodes.ACCEPTED,
                 success: true,
                 message: 'Tài khoản của bạn đã được kích hoạt thành công',
