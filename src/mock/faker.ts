@@ -59,7 +59,7 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
                     imageRef: faker.image.urlPicsumPhotos(),
                     size: randomPick(sizeids),
                     color: randomPick(colorids),
-                    stock: faker.number.int(),
+                    stock: randomPick([2, 10, 40, 200, 3000]),
                 };
             },
             {

@@ -55,7 +55,7 @@ export const getProductDetails = async (id: string) => {
     const product = await Product.findById(id)
         .populate({
             path: 'variants',
-            select: '-createdAt -updatedAt',
+            select: '-createdAt -updatedAt -imageRef',
             populate: [
                 {
                     path: 'color',
@@ -99,9 +99,13 @@ export const getProductDetails = async (id: string) => {
     );
 
     const variantsDetails = Object.entries(groupedByColor).map(([_, items]) => ({
-        color: items[0].color,
+        color: {
+            ...items[0].color,
+            image: items[0].image,
+        },
         items: items.map((item) => {
             delete item.color;
+            delete item.image;
             return item;
         }),
     }));
