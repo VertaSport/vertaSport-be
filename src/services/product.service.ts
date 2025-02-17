@@ -2,9 +2,8 @@ import { BadRequestError } from '@/error/customError';
 import APIQuery, { QueryString } from '@/helpers/apiQuery';
 import { IColorRaw } from '@/models/Color';
 import Product from '@/models/Product';
-import Variant, { IVariantSchema } from '@/models/Variant';
+import Variant from '@/models/Variant';
 import { ICreateProduct, ICreateVariant } from '@/types/product';
-import { ne } from '@faker-js/faker';
 import mongoose, { Types } from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct) => {

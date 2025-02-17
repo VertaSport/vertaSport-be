@@ -12,7 +12,7 @@ export function createRandomSize() {
         value = randomPick(['S', 'M', 'L', 'XL', 'XXL']);
     }
     if (type === SizeEnum.NumericSize) {
-        value = faker.number.int().toString();
+        value = randomPick(['28', '30', '32', '34', '36']);
     }
     return {
         type,
