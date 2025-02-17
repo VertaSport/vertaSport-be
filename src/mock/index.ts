@@ -1,4 +1,3 @@
-import { SizeEnum } from '@/constant/sizeType';
 import {
     createRandomCate,
     createRandomColor,
@@ -45,7 +44,7 @@ export const handleInsertData = async (req: Request, res: Response) => {
         const colorIds = createdColor.map((color) => color._id.toString());
 
         const productData = faker.helpers.multiple(() => createRandomProduct(sizeIds, colorIds, cateIds), {
-            count: 100,
+            count: 60,
         });
         await Promise.all(productData.map((product) => insertOneProductWithVariants(product)));
         res.status(200).json({ message: 'Insert data success' });

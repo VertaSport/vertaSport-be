@@ -1,9 +1,11 @@
 import { BadRequestError } from '@/error/customError';
 import APIQuery, { QueryString } from '@/helpers/apiQuery';
+import { IColorRaw } from '@/models/Color';
 import Product from '@/models/Product';
-import Variant from '@/models/Variant';
+import Variant, { IVariantSchema } from '@/models/Variant';
 import { ICreateProduct, ICreateVariant } from '@/types/product';
-import mongoose from 'mongoose';
+import { ne } from '@faker-js/faker';
+import mongoose, { Types } from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct) => {
     const session = await mongoose.startSession();
@@ -48,4 +50,58 @@ export const createMultipleVariants = async (dtos: ICreateVariant[]) => {
 export const updateVariant = async (id: string, dto: any) => {
     const variant = await Variant.findByIdAndUpdate(id, dto);
     return variant;
+};
+
+export const getProductDetails = async (id: string) => {
+    const product = await Product.findById(id)
+        .populate({
+            path: 'variants',
+            select: '-createdAt -updatedAt',
+            populate: {
+                path: 'color',
+                select: '-createdAt -updatedAt',
+            },
+        })
+        .select('-type -isDeleted -isHide')
+        .lean();
+    const groupedByColor = (
+        product.variants as unknown as {
+            image: string;
+            imageRef: string;
+            size: Types.ObjectId;
+            stock: number;
+            color: IColorRaw & { _id: Types.ObjectId };
+        }[]
+    ).reduce(
+        (acc, item) => {
+            const colorId = item.color._id.toString();
+            if (!acc[colorId]) {
+                acc[colorId] = [];
+            }
+            acc[colorId].push(item);
+            return acc;
+        },
+        {} as Record<
+            string,
+            {
+                image: string;
+                imageRef: string;
+                size: Types.ObjectId;
+                stock: number;
+                color: IColorRaw & { _id: Types.ObjectId };
+            }[]
+        >,
+    );
+
+    const variantsDetails = Object.entries(groupedByColor).map(([color, items]) => ({
+        color: items[0].color,
+        items: items.map((item) => {
+            delete item.color;
+            return item;
+        }),
+    }));
+
+    const result = { ...product, variants: variantsDetails };
+
+    return result;
 };

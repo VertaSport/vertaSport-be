@@ -98,7 +98,11 @@ export const addToCart = async <T extends ICartSchema>({
 
 // @Remove one cart item
 export const removeCartItem = async ({ variantId, userId }: { variantId: string; userId: string }) => {
-    const updatedCart = await Cart.findOneAndUpdate({ userId }, { $pull: { items: { variantId } } }, { new: true });
+    const updatedCart = await Cart.findOneAndUpdate(
+        { userId },
+        { $pull: { items: { variant: variantId } } },
+        { new: true },
+    );
     if (!updatedCart) throw new BadRequestError(`Not found cart`);
 };
 

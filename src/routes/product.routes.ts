@@ -13,5 +13,6 @@ productRouter.post('/variant', productController.createVariant);
 productRouter.get('/best-selling', productController.Top10BestSelling);
 productRouter.get('/newest', productController.get10Newest);
 productRouter.get('/', productController.getAllProductsClient);
+productRouter.get('/:id', productController.getProductDetails);
 
 export default productRouter;

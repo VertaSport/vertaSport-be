@@ -1,9 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IColorSchema extends Document {
+export interface IColorRaw {
     name: string;
     hex: string;
 }
+export interface IColorSchema extends Document, IColorRaw {}
 
 const ColorSchema = new Schema<IColorSchema>(
     {

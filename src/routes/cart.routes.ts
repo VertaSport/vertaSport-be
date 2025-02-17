@@ -4,9 +4,9 @@ import { Router } from 'express';
 
 const cartRouter = Router();
 
-cartRouter.post('/add', authenticate, cartController.addToCart);
-cartRouter.post('/update-quantity', authenticate, cartController.updateCartItem);
-cartRouter.post('/delete', authenticate, cartController.removeCartItem);
 cartRouter.get('/', authenticate, cartController.getAllCart);
+cartRouter.delete('/:variantId', authenticate, cartController.removeCartItem);
+cartRouter.post('/add', authenticate, cartController.addToCart);
+cartRouter.patch('/update-quantity', authenticate, cartController.updateCartItem);
 
 export default cartRouter;

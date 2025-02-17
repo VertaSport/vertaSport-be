@@ -146,3 +146,18 @@ export const get10Newest = asyncHandler(async (req: Request, res: Response, next
         }),
     );
 });
+// Get product details
+export const getProductDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+
+    const product = await productService.getProductDetails(id);
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: product,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});

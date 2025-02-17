@@ -34,13 +34,12 @@ export const addToCart = asyncHandler(async (req: Request, res: Response, next: 
 
 // Update cart item
 export const updateCartItem = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { productId, variantId, quantity, userId, currentCart, variant, product } =
-        await cartService.validateHandleCart({
-            productId: req.body.productId,
-            variantId: req.body.variantId,
-            quantity: req.body.quantity,
-            userId: req.userId,
-        });
+    const { variantId, quantity, userId } = await cartService.validateHandleCart({
+        productId: req.body.productId,
+        variantId: req.body.variantId,
+        quantity: req.body.quantity,
+        userId: req.userId,
+    });
     await cartService.updateCartItemQuantity({
         variantId,
         quantity,
@@ -59,20 +58,17 @@ export const updateCartItem = asyncHandler(async (req: Request, res: Response, n
 
 // Remove one cart item
 export const removeCartItem = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, variantId } = await cartService.validateHandleCart({
-        productId: req.body.productId,
-        variantId: req.body.variantId,
-        quantity: req.body.quantity,
-        userId: req.userId,
-    });
-    const updatedCart = await cartService.removeCartItem({
+    const userId = req.userId;
+    const variantId = req.params.variantId;
+    console.log(variantId, 'ok');
+    await cartService.removeCartItem({
         userId,
         variantId,
     });
 
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: updatedCart,
+            data: null,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
