@@ -32,11 +32,75 @@ export const deleteProduct = async (id: string) => {
 };
 
 export const getAllProducts = async (queryString: QueryString) => {
-    const features = new APIQuery(Product.find(), queryString);
+    const features = new APIQuery(
+        Product.find()
+            .populate({
+                path: 'variants',
+                select: '-createdAt -updatedAt -imageRef',
+                populate: [
+                    {
+                        path: 'color',
+                        select: '-createdAt -updatedAt',
+                    },
+                    {
+                        path: 'size',
+                        select: '-createdAt -updatedAt -type',
+                    },
+                ],
+            })
+            .select('-type -isDeleted -isHide')
+            .lean(),
+        queryString,
+    );
     features.filter().sort().limitFields().search().paginate();
     const [data, totalDocs] = await Promise.all([features.query, features.count()]);
+    const newData = data.map((product: any) => {
+        const groupedByColor = (
+            product.variants as {
+                image: string;
+                imageRef: string;
+                size: { _id: Types.ObjectId; value: string };
+                stock: number;
+                color: IColorRaw & { _id: Types.ObjectId };
+            }[]
+        ).reduce(
+            (acc, item) => {
+                const colorId = item.color._id.toString();
+                if (!acc[colorId]) {
+                    acc[colorId] = [];
+                }
+                acc[colorId].push(item);
+                return acc;
+            },
+            {} as Record<
+                string,
+                {
+                    image: string;
+                    imageRef: string;
+                    size: { _id: Types.ObjectId; value: string };
+                    stock: number;
+                    color: IColorRaw & { _id: Types.ObjectId };
+                }[]
+            >,
+        );
+
+        const variantsDetails = Object.entries(groupedByColor).map(([_, items]) => ({
+            color: {
+                ...items[0].color,
+                image: items[0].image,
+            },
+            items: items.map((item) => {
+                delete item.color;
+                delete item.image;
+                return item;
+            }),
+        }));
+
+        const result = { ...product, variants: variantsDetails };
+        return result;
+    });
     return {
-        data,
+        data: newData,
         totalDocs,
     };
 };
