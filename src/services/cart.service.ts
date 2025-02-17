@@ -2,10 +2,32 @@ import { BadRequestError, NotFoundError } from '@/error/customError';
 import Cart, { ICartSchema } from '@/models/Cart';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
+import path from 'path';
 
 // @Get cart by user
 export const getCartByUser = async (userId: string) => {
-    const cartUser = await Cart.findOne({ userId }).populate('items.product').populate('items.variant').exec();
+    const cartUser = await Cart.findOne({ userId })
+        .populate([
+            {
+                path: 'items.variant',
+                select: '-createdAt -updatedAt -imageRef',
+                populate: [
+                    {
+                        path: 'color',
+                        select: '-createdAt -updatedAt',
+                    },
+                    {
+                        path: 'size',
+                        select: '-createdAt -updatedAt',
+                    },
+                ],
+            },
+            {
+                path: 'items.product',
+                select: '-createdAt -updatedAt -imageRef',
+            },
+        ])
+        .exec();
 
     if (!cartUser) throw new NotFoundError('Not found cart or cart is not exist.');
 
