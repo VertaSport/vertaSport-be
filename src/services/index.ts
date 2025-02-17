@@ -1,3 +1,6 @@
 export * as authService from './auth.service';
 export * as productService from './product.service';
 export * as cartService from './cart.service';
+export * as orderService from './order.service';
+export * as inventoryService from './inventory.service';
+export * as shippingService from './shipping.service';
