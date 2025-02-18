@@ -20,6 +20,19 @@ export const getAllSize = asyncHandler(async (req: Request, res: Response, next:
     );
 });
 
+export const getDetailedSize = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const size = await Size.findById(req.params.id).lean();
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: size,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
 export const createSize = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const size = new Size(req.body);
     await size.save();

@@ -14,7 +14,7 @@ router.use('/products', productRouter);
 router.use('/uploads', uploadRouter);
 router.use('/colors', colorRouter);
 router.use('/carts', cartRouter);
-router.use('/size', sizeRouter);
+router.use('/sizes', sizeRouter);
 router.use('/cate', cateRouter);
 
 export default router;
