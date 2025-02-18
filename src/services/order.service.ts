@@ -80,7 +80,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     );
     return res
         .status(StatusCodes.OK)
-        .json(customResponse({ data: req.body, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
+        .json(customResponse({ data: order, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
 };
 
 // @ GET DETAILED ORDER
