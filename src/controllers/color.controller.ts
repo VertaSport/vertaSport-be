@@ -18,6 +18,19 @@ export const getAllColor = asyncHandler(async (req: Request, res: Response, next
     );
 });
 
+export const getDetailedColor = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const color = await Color.findById(req.params.id).lean();
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: color,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
 // create new color
 export const createColor = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const color = new Color(req.body);

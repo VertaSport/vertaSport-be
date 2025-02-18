@@ -1,6 +1,7 @@
 import { ROLE } from '@/constant/allowedRoles';
 import { ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
-import mongoose from 'mongoose';
+import { OrderSchema } from '@/interfaces/schema/order';
+import mongoose, { ObjectId } from 'mongoose';
 
 const OrderItemSchema = new mongoose.Schema(
     {
@@ -21,7 +22,6 @@ const OrderItemSchema = new mongoose.Schema(
         size: { type: String, required: true },
         color: { type: String, required: true },
         category: { type: String, required: true },
-        tags: [{ type: String, required: true }],
         quantity: {
             type: Number,
             required: true,
@@ -72,11 +72,6 @@ const orderSchema = new mongoose.Schema(
             email: { type: String, required: true },
             phone: { type: String, required: true },
         },
-        receiverInfo: {
-            name: { type: String, default: '' },
-            email: { type: String, default: '' },
-            phone: { type: String, default: '' },
-        },
         shippingAddress: {
             country: {
                 type: String,
@@ -91,7 +86,7 @@ const orderSchema = new mongoose.Schema(
             trim: true,
             required: true,
             enum: Object.values(PAYMENT_METHOD),
-            default: PAYMENT_METHOD.CARD,
+            default: PAYMENT_METHOD.CASH,
         },
         isPaid: {
             type: Boolean,
@@ -116,4 +111,4 @@ const orderSchema = new mongoose.Schema(
         timestamps: true,
     },
 );
-export default mongoose.model('Order', orderSchema);
+export default mongoose.model<OrderSchema>('Order', orderSchema);
