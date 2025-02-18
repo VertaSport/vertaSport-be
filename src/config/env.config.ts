@@ -19,6 +19,12 @@ const envVarsSchema = z.object({
     // NODEMAILER
     EMAIL_USER: z.string().email(),
     EMAIL_PASSWORD: z.string().min(3),
+    // SHIPPING
+    SHIPPING_API_TOKEN: z.string().describe('Shipping Api Token'),
+    SHIPPING_API_ENDPOINT: z.string().describe('Shipping Api Endpoint'),
+    SHOP_ID: z.string().describe('Shop Id'),
+    FROM_DISTRICT_ID: z.coerce.number(),
+    FROM_WARD_CODE: z.string().describe('From Ward'),
 });
 
 const result = envVarsSchema.safeParse(process.env);
@@ -54,6 +60,13 @@ const config = {
     nodeMailer: {
         email: envVars.EMAIL_USER,
         password: envVars.EMAIL_PASSWORD,
+    },
+    shipping: {
+        apiToken: envVars.SHIPPING_API_TOKEN,
+        apiEndpoint: envVars.SHIPPING_API_ENDPOINT,
+        shopId: envVars.SHOP_ID,
+        fromDistrictId: envVars.FROM_DISTRICT_ID,
+        fromWardCode: envVars.FROM_WARD_CODE,
     },
 };
 

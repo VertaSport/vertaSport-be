@@ -8,7 +8,7 @@ export interface IProductType {
 
 export interface IProductSchema extends Document {
     name: string;
-    price: string;
+    price: number;
     summary: string;
     thumbnail: string;
     thumbnailRef: string;
@@ -25,7 +25,7 @@ export interface IProductSchema extends Document {
 const ProductSchema = new Schema<IProductSchema>(
     {
         name: { type: String, required: true },
-        price: { type: String, required: true },
+        price: { type: Number, required: true },
         summary: { type: String, required: true },
         thumbnail: { type: String, required: true },
         thumbnailRef: { type: String, required: true },

@@ -43,8 +43,8 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
         name: faker.commerce.productName(),
         price: faker.commerce.price(),
         summary: faker.commerce.productDescription(),
-        thumbnail: faker.image.urlPicsumPhotos(),
-        thumbnailRef: faker.image.urlPicsumPhotos(),
+        thumbnail: 'https://product.hstatic.net/200000182297/product/10_88364b6db7ba40caa702330203f7f471_master.jpg',
+        thumbnailRef: 'https://product.hstatic.net/200000182297/product/10_88364b6db7ba40caa702330203f7f471_master.jpg',
         sold: faker.number.int(),
         isDeleted: faker.datatype.boolean(),
         isHide: faker.datatype.boolean(),
@@ -55,8 +55,9 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
         variants: faker.helpers.multiple(
             () => {
                 return {
-                    image: faker.image.urlPicsumPhotos(),
-                    imageRef: faker.image.urlPicsumPhotos(),
+                    image: 'https://product.hstatic.net/200000182297/product/10_88364b6db7ba40caa702330203f7f471_master.jpg',
+                    imageRef:
+                        'https://product.hstatic.net/200000182297/product/10_88364b6db7ba40caa702330203f7f471_master.jpg',
                     size: randomPick(sizeids),
                     color: randomPick(colorids),
                     stock: randomPick([2, 10, 40, 200, 3000]),
