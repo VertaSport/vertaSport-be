@@ -79,6 +79,7 @@ const orderSchema = new mongoose.Schema(
             },
             province: String,
             district: String,
+            ward: String,
             address: String,
         },
         paymentMethod: {
