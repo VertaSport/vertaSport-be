@@ -7,7 +7,7 @@ import { ICreateProduct, ICreateVariant } from '@/types/product';
 import { removeUploadedFile } from '@/utils/files';
 import mongoose, { Types } from 'mongoose';
 
-export const createProduct = async (dto: ICreateProduct) => {
+export const createProduct = async (dto: ICreateProduct, imageRefVariants: string[]) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -18,7 +18,7 @@ export const createProduct = async (dto: ICreateProduct) => {
     } catch (error) {
         await Promise.all([
             removeUploadedFile(dto.thumbnailRef),
-            ...dto.imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)),
+            ...imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)),
             Variant.deleteMany({ _id: { $in: dto.variants } }),
         ]);
         await session.abortTransaction();
@@ -27,10 +27,45 @@ export const createProduct = async (dto: ICreateProduct) => {
         session.endSession();
     }
 };
-export const updateProduct = async (id: string, dto: any) => {
-    const product = await Product.findByIdAndUpdate(id, dto);
-    return product;
+export const updateProduct = async (id: string, dto: any, variants: any, imageRefVariants: string[]) => {
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            const variantIds: Types.ObjectId[] = [];
+            const filterColor: string[] = [];
+            const filterSize: string[] = [];
+
+            for (const variant of variants) {
+                const variantId = variant._id ? new Types.ObjectId(variant._id) : new Types.ObjectId();
+
+                variantIds.push(variantId);
+
+                if (variant._id) {
+                    await Variant.findByIdAndUpdate(variant._id, variant, { session });
+                } else {
+                    await Variant.create([{ ...variant, _id: variantId }], {
+                        session,
+                    });
+                }
+
+                filterColor.push(variant.color);
+                filterSize.push(variant.size);
+            }
+
+            dto.variants = variantIds;
+            dto.filterColor = [...new Set(filterColor)];
+            dto.filterSize = [...new Set(filterSize)];
+
+            await Product.findByIdAndUpdate(id, dto, { session, new: true });
+        });
+    } catch (error) {
+        await Promise.all(imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)));
+        throw new BadRequestError(error.message);
+    } finally {
+        session.endSession();
+    }
 };
+
 export const deleteProduct = async (id: string) => {
     await Product.findByIdAndUpdate(id, { isDeleted: true });
     return null;

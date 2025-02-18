@@ -46,6 +46,14 @@ export const handleInsertData = async (req: Request, res: Response) => {
         const productData = faker.helpers.multiple(() => createRandomProduct(sizeIds, colorIds, cateIds), {
             count: 60,
         });
+        await User.create({
+            email: 'admin@gmail.com',
+            password: '123456',
+            role: 'admin',
+            name: 'Admin',
+            phone: '0123456789',
+            isActive: true,
+        });
         await Promise.all(productData.map((product) => insertOneProductWithVariants(product)));
         res.status(200).json({ message: 'Insert data success' });
     } catch (error) {

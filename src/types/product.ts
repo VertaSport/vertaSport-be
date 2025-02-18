@@ -13,7 +13,6 @@ export type ICreateProduct = {
     categories: string[];
     filterSize: string[];
     filterColor: string[];
-    imageRefVariants: string[];
 };
 
 export type ICreateVariant = {
@@ -22,4 +21,32 @@ export type ICreateVariant = {
     size: string;
     stock: number;
     color: string;
+};
+
+export type IProductDetailsForUpdateHandler = {
+    name: string;
+    price: number;
+    summary: string;
+    categories: string;
+    sizeType: SizeEnum;
+    thumbnail: Array<{
+        uid: string;
+        name: string;
+        status: string;
+        url: string;
+    }>;
+    variants: Array<{
+        color: string;
+        image: Array<{
+            uid: string;
+            name: string;
+            status: string;
+            url: string;
+        }>;
+        properties: Array<{
+            size: string;
+            stock: number;
+            _id: string;
+        }>;
+    }>;
 };

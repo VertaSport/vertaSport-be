@@ -60,7 +60,6 @@ export const updateCartItem = asyncHandler(async (req: Request, res: Response, n
 export const removeCartItem = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
     const variantId = req.params.variantId;
-    console.log(variantId, 'ok');
     await cartService.removeCartItem({
         userId,
         variantId,

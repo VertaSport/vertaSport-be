@@ -1,11 +1,15 @@
+import { SizeEnum } from '@/constant/sizeType';
 import { QueryString } from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
 import Category from '@/models/Category';
+import { IColorRaw } from '@/models/Color';
+import Product from '@/models/Product';
 import { productService } from '@/services';
-import { ICreateProduct } from '@/types/product';
+import { ICreateProduct, IProductDetailsForUpdateHandler } from '@/types/product';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
+import { Types } from 'mongoose';
 
 // Create a new product
 export const createProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -22,12 +26,33 @@ export const createProduct = asyncHandler(async (req: Request, res: Response, ne
         categories: req.body.categories,
         filterSize: req.body.filterSize,
         filterColor: req.body.filterColor,
-        imageRefVariants: req.body.imageRefVariants,
     };
-    const data = await productService.createProduct(dto);
+    const data = await productService.createProduct(dto, req.body.imageRefVariants);
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: data,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+export const updateProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.idPro;
+    const dto = {
+        name: req.body.name,
+        price: req.body.price,
+        summary: req.body.summary,
+        thumbnail: req.body.thumbnail,
+        thumbnailRef: req.body.thumbnailRef,
+        categories: req.body.categories,
+    };
+    if (!dto.thumbnail) delete dto.thumbnail;
+    if (!dto.thumbnailRef) delete dto.thumbnailRef;
+    await productService.updateProduct(id, dto, req.body.variants, req.body.imageRefVariants);
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
@@ -190,6 +215,81 @@ export const getProductRelated = asyncHandler(async (req: Request, res: Response
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: product,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+
+// Get product details admin
+export const getProductDetailsForAdminUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+
+    const product = await Product.findById(id)
+        .populate({
+            path: 'variants',
+            populate: [
+                {
+                    path: 'color',
+                },
+                {
+                    path: 'size',
+                },
+            ],
+        })
+        .lean();
+
+    const groupedByColor = (
+        product.variants as unknown as {
+            _id: Types.ObjectId;
+            image: string;
+            imageRef: string;
+            size: { _id: Types.ObjectId; value: string };
+            stock: number;
+            color: IColorRaw & { _id: Types.ObjectId };
+        }[]
+    ).reduce(
+        (acc, item) => {
+            const colorId = item.color._id.toString();
+            if (!acc[colorId]) {
+                acc[colorId] = [];
+            }
+            acc[colorId].push(item);
+            return acc;
+        },
+        {} as Record<
+            string,
+            {
+                _id: Types.ObjectId;
+                image: string;
+                imageRef: string;
+                size: { _id: Types.ObjectId; value: string };
+                stock: number;
+                color: IColorRaw & { _id: Types.ObjectId };
+            }[]
+        >,
+    );
+
+    const variantsDetails = Object.entries(groupedByColor).map(([color, items]) => ({
+        color,
+        image: [{ uid: items[0]._id.toString(), name: `variant-image ${color}`, status: 'done', url: items[0].image }],
+        properties: items.map((item) => {
+            return { size: item.size._id.toString(), stock: item.stock, _id: item._id.toString() };
+        }),
+    }));
+
+    const result: IProductDetailsForUpdateHandler = {
+        ...product,
+        variants: variantsDetails,
+        sizeType: SizeEnum.FreeSize,
+        categories: product.categories.join(','),
+        thumbnail: [{ uid: '-1', name: 'thumbnail', status: 'done', url: product.thumbnail }],
+    };
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: result,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
