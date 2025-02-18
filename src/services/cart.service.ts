@@ -74,6 +74,8 @@ export const validateHandleCart = async ({
 
     if (!variant) throw new BadRequestError(`Not found product`);
 
+    if (variant.stock === 0) throw new BadRequestError(`Sản phẩm đã hết hàng`);
+
     if (quantity < 1) throw new BadRequestError(`Quantity must be at least 1`);
 
     if (quantity > variant.stock!) quantity = variant.stock;

@@ -78,7 +78,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             field: 'password',
         });
     }
-    const user = _.pick(foundedUser, ['_id', 'name', 'email', 'role', 'avatar', 'avatarRef']);
+    const user = _.pick(foundedUser, ['_id', 'name', 'email', 'role', 'phone', 'avatar', 'avatarRef']);
     const { accessToken } = await generateAuthTokens(foundedUser);
     return res.status(StatusCodes.ACCEPTED).json(
         customResponse({
