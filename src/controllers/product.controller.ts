@@ -1,11 +1,11 @@
 import { QueryString } from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
+import Category from '@/models/Category';
 import { productService } from '@/services';
 import { ICreateProduct } from '@/types/product';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
-import mongoose from 'mongoose';
 
 // Create a new product
 export const createProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -22,11 +22,12 @@ export const createProduct = asyncHandler(async (req: Request, res: Response, ne
         categories: req.body.categories,
         filterSize: req.body.filterSize,
         filterColor: req.body.filterColor,
+        imageRefVariants: req.body.imageRefVariants,
     };
-    await productService.createProduct(dto);
+    const data = await productService.createProduct(dto);
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: null,
+            data: data,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
@@ -36,10 +37,10 @@ export const createProduct = asyncHandler(async (req: Request, res: Response, ne
 
 // Create a new variant
 export const createVariant = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    await productService.createMultipleVariants(req.body);
+    const datas = await productService.createMultipleVariants(req.body.variants);
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: null,
+            data: datas,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
@@ -66,7 +67,7 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
     delete query.size;
     delete query.color;
 
-    const products = await productService.getAllProducts(query);
+    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -97,7 +98,20 @@ export const getAllProductsAdmin = asyncHandler(async (req: Request, res: Respon
     delete query.size;
     delete query.color;
 
-    const products = await productService.getAllProducts(query);
+    const [categories, subCategories, products] = await Promise.all([
+        Category.find().select('name _id'),
+        Category.find().select('name _id'),
+        productService.getAllProducts(query),
+    ]);
+
+    products.data.forEach((product) => {
+        const categoryObj = categories.find((el) => el._id.toString() === product.categories[0].toString());
+        let subCategoryObj = null;
+        if (product.categories[1]) {
+            subCategoryObj = subCategories.find((el) => el._id.toString() === product.categories[1].toString());
+        }
+        product.categories = [categoryObj, subCategoryObj].filter((el) => el !== null);
+    });
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -116,7 +130,7 @@ export const Top10BestSelling = asyncHandler(async (req: Request, res: Response,
 
     query.limit = String(limit);
 
-    const products = await productService.getAllProducts(query);
+    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -135,7 +149,7 @@ export const get10Newest = asyncHandler(async (req: Request, res: Response, next
 
     query.limit = String(limit);
 
-    const products = await productService.getAllProducts(query);
+    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -151,10 +165,14 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
     const id = req.params.id;
 
     const product = await productService.getProductDetails(id);
-
+    const [category, subCategory] = await Promise.all([
+        Category.findById(product.categories[0]).select('name _id'),
+        Category.findById(product.categories[1]).select('name _id'),
+    ]);
+    const result = { ...product, categories: [category, subCategory].filter((el) => el !== null) };
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: product,
+            data: result,
             success: true,
             status: StatusCodes.OK,
             message: ReasonPhrases.OK,
@@ -164,7 +182,10 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
 // Get product related
 export const getProductRelated = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.categoryId;
-    const product = await productService.getAllProducts({ categories: id, limit: '10' });
+    const product = await productService.getAllProducts(
+        { categories: id, limit: '10' },
+        '-isHide filterSize filterColor',
+    );
 
     return res.status(StatusCodes.OK).json(
         customResponse({

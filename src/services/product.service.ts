@@ -4,6 +4,7 @@ import { IColorRaw } from '@/models/Color';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { ICreateProduct, ICreateVariant } from '@/types/product';
+import { removeUploadedFile } from '@/utils/files';
 import mongoose, { Types } from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct) => {
@@ -15,7 +16,11 @@ export const createProduct = async (dto: ICreateProduct) => {
         await session.commitTransaction();
         return product;
     } catch (error) {
-        await Variant.deleteMany({ _id: { $in: dto.variants } });
+        await Promise.all([
+            removeUploadedFile(dto.thumbnailRef),
+            ...dto.imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)),
+            Variant.deleteMany({ _id: { $in: dto.variants } }),
+        ]);
         await session.abortTransaction();
         throw new BadRequestError(error.message);
     } finally {
@@ -31,7 +36,7 @@ export const deleteProduct = async (id: string) => {
     return null;
 };
 
-export const getAllProducts = async (queryString: QueryString) => {
+export const getAllProducts = async (queryString: QueryString, select: string = '') => {
     const features = new APIQuery(
         Product.find()
             .populate({
@@ -48,7 +53,7 @@ export const getAllProducts = async (queryString: QueryString) => {
                     },
                 ],
             })
-            .select('-type -isDeleted -isHide')
+            .select('-type -isDeleted' + select)
             .lean(),
         queryString,
     );

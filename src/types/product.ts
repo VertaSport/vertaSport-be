@@ -13,6 +13,7 @@ export type ICreateProduct = {
     categories: string[];
     filterSize: string[];
     filterColor: string[];
+    imageRefVariants: string[];
 };
 
 export type ICreateVariant = {

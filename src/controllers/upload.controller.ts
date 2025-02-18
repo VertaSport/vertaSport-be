@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes';
 
 export const uploadImage = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const file = req.file as any;
+    console.log(file);
     if (!file) {
         throw new BadRequestError('Please upload a file');
     }
