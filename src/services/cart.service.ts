@@ -33,6 +33,9 @@ export const getCartByUser = async (userId: string) => {
 
     cartUser.items.forEach((item) => {
         const variant = item.variant as unknown as { stock: number };
+        if (variant.stock === 0) {
+            return false;
+        }
         if (variant.stock < item.quantity) {
             item.quantity = variant.stock;
         }
