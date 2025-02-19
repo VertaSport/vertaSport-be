@@ -91,8 +91,9 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
 
     delete query.size;
     delete query.color;
+    query.fields = '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide';
 
-    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
+    const products = await productService.getAllProducts(query);
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -154,8 +155,9 @@ export const Top10BestSelling = asyncHandler(async (req: Request, res: Response,
     const limit = 10;
 
     query.limit = String(limit);
+    query.fields = '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide';
 
-    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
+    const products = await productService.getAllProducts(query);
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -173,8 +175,9 @@ export const get10Newest = asyncHandler(async (req: Request, res: Response, next
     const limit = 10;
 
     query.limit = String(limit);
+    query.fields = '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide';
 
-    const products = await productService.getAllProducts(query, '-isHide filterSize filterColor');
+    const products = await productService.getAllProducts(query);
 
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -207,10 +210,11 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
 // Get product related
 export const getProductRelated = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.categoryId;
-    const product = await productService.getAllProducts(
-        { categories: id, limit: '10' },
-        '-isHide filterSize filterColor',
-    );
+    const product = await productService.getAllProducts({
+        categories: id,
+        limit: '10',
+        fields: '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide',
+    });
 
     return res.status(StatusCodes.OK).json(
         customResponse({

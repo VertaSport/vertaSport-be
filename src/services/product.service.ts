@@ -71,7 +71,7 @@ export const deleteProduct = async (id: string) => {
     return null;
 };
 
-export const getAllProducts = async (queryString: QueryString, select: string = '') => {
+export const getAllProducts = async (queryString: QueryString) => {
     const features = new APIQuery(
         Product.find()
             .populate({
@@ -88,7 +88,6 @@ export const getAllProducts = async (queryString: QueryString, select: string = 
                     },
                 ],
             })
-            .select('-type -isDeleted' + select)
             .lean(),
         queryString,
     );
