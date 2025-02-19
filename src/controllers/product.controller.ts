@@ -47,8 +47,10 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response, ne
         thumbnailRef: req.body.thumbnailRef,
         categories: req.body.categories,
     };
+
     if (!dto.thumbnail) delete dto.thumbnail;
     if (!dto.thumbnailRef) delete dto.thumbnailRef;
+
     await productService.updateProduct(id, dto, req.body.variants, req.body.imageRefVariants);
     return res.status(StatusCodes.OK).json(
         customResponse({
@@ -277,7 +279,7 @@ export const getProductDetailsForAdminUpdate = asyncHandler(async (req: Request,
 
     const variantsDetails = Object.entries(groupedByColor).map(([color, items]) => ({
         color,
-        image: [{ uid: items[0]._id.toString(), name: `variant-image ${color}`, status: 'done', url: items[0].image }],
+        image: [{ uid: items[0]._id.toString(), name: items[0].imageRef, status: 'done', url: items[0].image }],
         properties: items.map((item) => {
             return { size: item.size._id.toString(), stock: item.stock, _id: item._id.toString() };
         }),

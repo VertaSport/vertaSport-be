@@ -3,16 +3,16 @@ import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { randomPick } from '@/utils/randomPick';
 
-import { faker } from '@faker-js/faker';
+import { fa, faker } from '@faker-js/faker';
 
 export function createRandomSize() {
     const type = randomPick([SizeEnum.FreeSize, SizeEnum.NumericSize]);
     let value = '';
     if (type === SizeEnum.FreeSize) {
-        value = randomPick(['S', 'M', 'L', 'XL', 'XXL']);
+        value = faker.string.ulid();
     }
     if (type === SizeEnum.NumericSize) {
-        value = randomPick(['28', '30', '32', '34', '36']);
+        value = faker.string.ulid();
     }
     return {
         type,
@@ -21,7 +21,7 @@ export function createRandomSize() {
 }
 export function createRandomColor() {
     return {
-        name: faker.internet.color(),
+        name: faker.string.ulid(),
         hex: faker.internet.color(),
     };
 }
@@ -73,31 +73,34 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
     };
 }
 
-export const insertOneProductWithVariants = async (data: {
-    name: string;
-    price: string;
-    summary: string;
-    thumbnail: string;
-    thumbnailRef: string;
-    sold: number;
-    isDeleted: boolean;
-    isHide: boolean;
-    type: {
-        hasColor: boolean;
-        sizeType: SizeEnum;
-    };
-    variants: {
-        image: string;
-        imageRef: string;
-        size: string;
-        color: string;
-        stock: number;
-    }[];
-    categories: string;
-    filterSize: string;
-    filterColor: string;
-}) => {
+export const insertOneProductWithVariants = async (
+    data: {
+        name: string;
+        price: string;
+        summary: string;
+        thumbnail: string;
+        thumbnailRef: string;
+        sold: number;
+        isDeleted: boolean;
+        isHide: boolean;
+        type: {
+            hasColor: boolean;
+            sizeType: SizeEnum;
+        };
+        variants: {
+            image: string;
+            imageRef: string;
+            size: string;
+            color: string;
+            stock: number;
+        }[];
+        categories: string;
+        filterSize: string;
+        filterColor: string;
+    },
+    type: SizeEnum,
+) => {
     const variantNews = await Variant.insertMany(data.variants);
     const variantIds = variantNews.map((variant) => variant._id.toString());
-    await Product.create({ ...data, variants: variantIds });
+    await Product.create({ ...data, variants: variantIds, type: { ...data.type, sizeType: type } });
 };
