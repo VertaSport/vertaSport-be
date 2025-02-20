@@ -10,11 +10,13 @@ const productRouter = Router();
 
 productRouter.get('/admin/product-details/:id', productController.getProductDetailsForAdminUpdate);
 productRouter.get('/admin', productController.getAllProductsAdmin);
+
+productRouter.get('/best-selling', productController.Top10BestSelling);
+productRouter.post('/variant', productController.createVariant);
+productRouter.get('/newest', productController.get10Newest);
+productRouter.get('/:id', productController.getProductDetails);
 productRouter.post('/', productController.createProduct);
 productRouter.get('/', productController.getAllProductsClient);
-productRouter.post('/variant', productController.createVariant);
-productRouter.get('/best-selling', productController.Top10BestSelling);
-productRouter.get('/newest', productController.get10Newest);
 productRouter.get('/related/:categoryId', productController.getProductRelated);
 productRouter.patch('/update/:idPro', productController.updateProduct);
 productRouter.get('/:id', productController.getProductDetails);
