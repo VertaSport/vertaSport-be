@@ -30,7 +30,14 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
     if (!isMatchedPassword) {
         throw new BadRequestFormError('Lỗi form', {
             field: 'oldPassword',
-            message: 'Mật khẩu cũ không đúng vui lòng kiểm tra lại',
+            message: 'Mật khẩu cũ không đúng vui lòng kiểm tra lại!',
+        });
+    }
+    const isMatchedNewPassword = await bcrypt.compare(req.body.newPassword, foundedUser?.password);
+    if (isMatchedNewPassword) {
+        throw new BadRequestFormError('Lỗi form', {
+            field: 'newPassword',
+            message: 'Mật khẩu mới trùng với mật khẩu cũ!',
         });
     }
     const saltRounds = 10;
