@@ -7,3 +7,4 @@ export * as sizeController from './size.controller';
 export * as cateController from './category.controller';
 export * as orderController from './order.controller';
 export * as shippingController from './shipping.controller';
+export * as userController from './user.controller';

@@ -8,10 +8,12 @@ import sizeRouter from '@/routes/size.routes';
 import cateRouter from '@/routes/cate.routes';
 import orderRouter from './order.routes';
 import shippingRouter from './shipping.routes';
+import userRouter from './user.routes';
 
 const router = Router();
 
 router.use('/auth', authRouter);
+router.use('/user', userRouter);
 router.use('/products', productRouter);
 router.use('/uploads', uploadRouter);
 router.use('/colors', colorRouter);
