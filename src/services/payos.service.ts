@@ -1,13 +1,12 @@
+import { ORDER_PAYMENT_STATUS } from '@/constant/order';
 import { NotFoundError } from '@/error/customError';
 import customResponse from '@/helpers/response';
+import Cart from '@/models/Cart';
 import Order from '@/models/Order';
 import PayOS from '@payos/node';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
-import { updateStockOnCreateOrder } from './inventory.service';
-import Cart from '@/models/Cart';
 import { inventoryService } from '.';
-import { ORDER_PAYMENT_STATUS } from '@/constant/order';
 
 const payOS = new PayOS(
     process.env.PAYOS_CLIENT_ID as string,
@@ -22,7 +21,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
 
     await inventoryService.checkProductStatus(req.body.items);
 
-    await updateStockOnCreateOrder(req.body.items);
+    await inventoryService.updateStockOnCreateOrder(req.body.items);
 
     const order = new Order({
         ...req.body,
@@ -94,6 +93,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
                 { orderCode },
                 {
                     isPaid: true,
+                    orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
                 },
                 { new: true },
             );
