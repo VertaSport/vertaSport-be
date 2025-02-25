@@ -9,6 +9,7 @@ import cateRouter from '@/routes/cate.routes';
 import orderRouter from './order.routes';
 import shippingRouter from './shipping.routes';
 import userRouter from './user.routes';
+import payosRouter from './payos.routes';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/sizes', sizeRouter);
 router.use('/cate', cateRouter);
 router.use('/orders', orderRouter);
 router.use('/shipping', shippingRouter);
+router.use('/payos', payosRouter);
 
 export default router;

@@ -5,3 +5,4 @@ export * as orderService from './order.service';
 export * as inventoryService from './inventory.service';
 export * as shippingService from './shipping.service';
 export * as userService from './user.service';
+export * as payosService from './payos.service';

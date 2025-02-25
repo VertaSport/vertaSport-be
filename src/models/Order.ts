@@ -1,5 +1,5 @@
 import { ROLE } from '@/constant/allowedRoles';
-import { ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
+import { ORDER_PAYMENT_STATUS, ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
 import { OrderSchema } from '@/interfaces/schema/order';
 import mongoose, { ObjectId } from 'mongoose';
 
@@ -58,6 +58,12 @@ const orderSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         },
+        orderCode: {
+            type: Number,
+        },
+        paymentLinkId: {
+            type: String,
+        },
         items: [OrderItemSchema],
         totalPrice: {
             type: Number,
@@ -105,6 +111,12 @@ const orderSchema = new mongoose.Schema(
             type: String,
             default: ORDER_STATUS.PENDING,
             enum: Object.values(ORDER_STATUS),
+        },
+        expiredAt: { type: Date },
+        orderPaymentStatus: {
+            type: String,
+            default: ORDER_PAYMENT_STATUS.PENDING,
+            enum: Object.values(ORDER_PAYMENT_STATUS),
         },
     },
     {

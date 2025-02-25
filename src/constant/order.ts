@@ -7,6 +7,12 @@ export enum ORDER_STATUS {
     DONE = 'done',
 }
 
+export enum ORDER_PAYMENT_STATUS {
+    PENDING = 'pending',
+    CANCELLED = 'cancelled',
+    SUCCESSED = 'successed',
+}
+
 export enum PAYMENT_METHOD {
     CASH = 'cash',
     CARD = 'card',

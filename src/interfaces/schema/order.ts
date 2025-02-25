@@ -14,6 +14,7 @@ export interface OrderSchema extends mongoose.Document {
     userId: mongoose.Schema.Types.ObjectId;
     items: ItemOrder[];
     totalPrice: number;
+    orderCode: number;
     tax: number;
     coupon: string;
     shippingFee: number;
@@ -38,4 +39,6 @@ export interface OrderSchema extends mongoose.Document {
     canceledBy: string;
     description: string;
     orderStatus: string;
+    expiredAt: string;
+    orderPaymentStatus: string;
 }

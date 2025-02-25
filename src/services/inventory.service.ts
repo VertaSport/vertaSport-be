@@ -1,6 +1,11 @@
-import { BadRequestError } from '@/error/customError';
+import { BadRequestError, NotAcceptableError, NotFoundError } from '@/error/customError';
+import customResponse from '@/helpers/response';
 import { ItemOrder } from '@/interfaces/schema/order';
+import Order from '@/models/Order';
+import Product from '@/models/Product';
 import Variant from '@/models/Variant';
+import { NextFunction, Request, Response } from 'express';
+import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
     return Promise.all(
@@ -44,3 +49,39 @@ export const updateStockOnCancelOrder = async (dataItems: ItemOrder[]) => {
         }),
     );
 };
+
+export const checkProductStatus = async (items: ItemOrder[]) => {
+    const products = await Product.find({
+        _id: { $in: items.map((item: ItemOrder) => item.productId) },
+    })
+        .populate({
+            path: 'variants',
+            select: 'stock',
+        })
+        .select('isHide')
+        .lean();
+
+    if (!products) throw new NotFoundError('Không tìm thấy sản phẩm');
+
+    const isOutOfStock = products.some((item: any) => {
+        const productTarget = items.find((pro: ItemOrder) => pro.productId === String(item._id));
+        if (productTarget!.quantity > item.stock!) {
+            return true;
+        }
+    });
+    const isHidedProduct = products.some((item) => {
+        if (item.isHide) {
+            return true;
+        }
+    });
+
+    if (isOutOfStock) {
+        throw new NotAcceptableError('Sản phẩm đã hết hàng');
+    }
+
+    if (isHidedProduct) {
+        throw new NotAcceptableError('Sản phẩm đã không tồn tại');
+    }
+};
+
+

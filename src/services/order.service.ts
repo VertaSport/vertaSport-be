@@ -6,7 +6,7 @@ import Cart from '@/models/Cart';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import customResponse from '@/helpers/response';
 import APIQuery from '@/helpers/apiQuery';
-import { BadRequestError } from '@/error/customError';
+import { BadRequestError, NotFoundError } from '@/error/customError';
 import Variant from '@/models/Variant';
 import _ from 'lodash';
 
@@ -99,3 +99,5 @@ export const getDetailedOrder = async (req: Request, res: Response, next: NextFu
         .status(StatusCodes.OK)
         .json(customResponse({ data: response, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
 };
+
+
