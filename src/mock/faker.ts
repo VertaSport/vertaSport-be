@@ -11,7 +11,6 @@ const imgs = [
     'https://product.hstatic.net/200000182297/product/24_7b2a4e3795604e9490e8c1b2f5aee642_1024x1024.jpg',
     'https://product.hstatic.net/200000182297/product/24_f216954fa63848ffa2ccb8458599614a_1024x1024.jpg',
     'https://product.hstatic.net/200000182297/product/25_326a51c79aad44389262122d9fad9224_1024x1024.jpg',
-
     'https://product.hstatic.net/200000182297/product/24_43f498fed8b448f59e2378825ecc54c6_1024x1024.jpg',
     'https://product.hstatic.net/200000182297/product/knik3_9f70bb8c711f4ed09e5c69f3a02140bc_1024x1024.jpg',
     'https://product.hstatic.net/200000182297/product/22_d34194eaa8d5435983ee6a89c753da66_1024x1024.jpg',
@@ -66,7 +65,7 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
         summary: faker.commerce.productDescription(),
         thumbnail: randomPick(imgs),
         thumbnailRef: randomPick(imgs),
-        sold: faker.number.int(),
+        sold: randomPick([100000, 45, 55, 222, 353, 234, 5645, 234, 345, 345, 345, 2, 34, 346, 2134]),
         isDeleted: faker.datatype.boolean(),
         isHide: faker.datatype.boolean(),
         type: {

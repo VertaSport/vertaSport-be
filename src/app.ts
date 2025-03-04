@@ -23,7 +23,6 @@ app.use(compression());
 
 app.use(cookieParser());
 
-
 app.use(
     express.json({
         limit: '5mb',
@@ -31,14 +30,15 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
-
 // webhook
 app.use('/webhook', payosController.HandlePayOsWebhook);
 
 // routes
 app.use('/api/v1', router);
 app.get('/import-data', handleInsertData);
-
+app.get('/', (req: Request, res: Response) => {
+    res.send('Hello World');
+});
 //error middleware
 app.use(notFoundHandler);
 app.use(errorHandler);

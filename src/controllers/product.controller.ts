@@ -5,6 +5,7 @@ import customResponse from '@/helpers/response';
 import Category from '@/models/Category';
 import { IColorRaw } from '@/models/Color';
 import Product from '@/models/Product';
+import SubCategory from '@/models/SubCategory';
 import { productService } from '@/services';
 import { ICreateProduct, IProductDetailsForUpdateHandler } from '@/types/product';
 import { NextFunction, Request, Response } from 'express';
@@ -125,10 +126,9 @@ export const getAllProductsAdmin = asyncHandler(async (req: Request, res: Respon
 
     delete query.size;
     delete query.color;
-
     const [categories, subCategories, products] = await Promise.all([
         Category.find().select('name _id'),
-        Category.find().select('name _id'),
+        SubCategory.find().select('name _id'),
         productService.getAllProducts(query),
     ]);
 
