@@ -6,5 +6,6 @@ const uploadRouter = Router();
 
 uploadRouter.post('/image', upload.single('image'), uploadController.uploadImage);
 uploadRouter.post('/images', upload.fields([{ name: 'images', maxCount: 5 }]), uploadController.uploadImages);
+uploadRouter.get('/images', uploadController.getImages);
 
 export default uploadRouter;

@@ -1,4 +1,5 @@
 import { SizeEnum } from '@/constant/sizeType';
+import { summary } from '@/mock/summary';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
 import { randomPick } from '@/utils/randomPick';
@@ -62,7 +63,7 @@ export function createRandomProduct(sizeids: string[], colorids: string[], catei
     return {
         name: faker.commerce.productName(),
         price: String(randomPick([100000, 200000, 300000, 400000, 500000])),
-        summary: faker.commerce.productDescription(),
+        summary,
         thumbnail: randomPick(imgs),
         thumbnailRef: randomPick(imgs),
         sold: randomPick([100000, 45, 55, 222, 353, 234, 5645, 234, 345, 345, 345, 2, 34, 346, 2134]),
