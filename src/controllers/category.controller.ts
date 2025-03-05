@@ -1,3 +1,4 @@
+import { BadRequestError } from '@/error/customError';
 import APIQuery from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
@@ -28,6 +29,27 @@ export const createCate = asyncHandler(async (req: Request, res: Response, next:
         idSubCate.push(...subCateNew.map((item) => item._id));
     }
     const cateNew = new Category({ ...req.body, items: idSubCate });
+    await cateNew.save();
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: Category,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
+export const updateCategory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const parentCateId = req.params.cateId;
+    const currentCate = await Category.findById(parentCateId);
+    if (!currentCate) {
+        throw new BadRequestError('Category not found');
+    }
+    if (req.body.subCateId) {
+        SubCategory.findByIdAndUpdate(req.body.subCate._id, { name: req.body.subCate.name }, { new: true });
+    }
+    const cateNew = new Category({ name: req.body.name });
     await cateNew.save();
 
     return res.status(StatusCodes.OK).json(
