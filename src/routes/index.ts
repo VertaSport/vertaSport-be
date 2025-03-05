@@ -10,6 +10,8 @@ import orderRouter from './order.routes';
 import shippingRouter from './shipping.routes';
 import userRouter from './user.routes';
 import payosRouter from './payos.routes';
+import addressRouter from './address.routes';
+import reviewRouter from './reviews.routes';
 
 const router = Router();
 
@@ -24,5 +26,7 @@ router.use('/cate', cateRouter);
 router.use('/orders', orderRouter);
 router.use('/shipping', shippingRouter);
 router.use('/payos', payosRouter);
+router.use('/address', addressRouter);
+router.use('/review', reviewRouter);
 
 export default router;

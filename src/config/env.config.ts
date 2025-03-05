@@ -25,9 +25,16 @@ const envVarsSchema = z.object({
     SHOP_ID: z.string().describe('Shop Id'),
     FROM_DISTRICT_ID: z.coerce.number(),
     FROM_WARD_CODE: z.string().describe('From Ward'),
+    // PAYOS
+    PAYOS_CLIENT_ID: z.string().describe('PAYOS CLIENT ID là bắt buộc'),
+    PAYOS_API_KEY: z.string().describe('PAYOS API KEY là bắt buộc'),
+    PAYOS_CHECKSUM_KEY: z.string().describe('PAYOS CHECKUM KEY là bắt buộc'),
+    // NGROK
+    NGROK_AUTHTOKEN: z.string().describe('NGROK AUTH TOKEN là bắt buộc'),
 });
 
 const result = envVarsSchema.safeParse(process.env);
+
 if (!result.success) {
     result.error.issues.forEach((issue) => {
         console.error(`❌ Field "${issue.path.join('.')}" - ${issue.message}`);
@@ -67,6 +74,11 @@ const config = {
         shopId: envVars.SHOP_ID,
         fromDistrictId: envVars.FROM_DISTRICT_ID,
         fromWardCode: envVars.FROM_WARD_CODE,
+    },
+    payos: {
+        clientId: envVars.PAYOS_CLIENT_ID,
+        apiKey: envVars.PAYOS_API_KEY,
+        checksumKey: envVars.PAYOS_CHECKSUM_KEY,
     },
 };
 

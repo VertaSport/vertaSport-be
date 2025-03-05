@@ -9,3 +9,5 @@ export * as orderController from './order.controller';
 export * as shippingController from './shipping.controller';
 export * as userController from './user.controller';
 export * as payosController from './payos.controller';
+export * as addressController from './address.controller';
+export * as reviewController from './review.controller';
