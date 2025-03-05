@@ -84,7 +84,7 @@ export const updateColor = asyncHandler(async (req: Request, res: Response, next
                     success: false,
                     status: StatusCodes.NOT_FOUND,
                     message: 'Không tìm thấy màu sắc này!',
-                }),
+}),
             );
         }
 
