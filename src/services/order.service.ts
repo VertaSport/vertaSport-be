@@ -6,11 +6,39 @@ import Cart from '@/models/Cart';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import customResponse from '@/helpers/response';
 import APIQuery from '@/helpers/apiQuery';
-import { BadRequestError, NotFoundError } from '@/error/customError';
+import { BadRequestError, NotAcceptableError, NotFoundError } from '@/error/customError';
 import Variant from '@/models/Variant';
 import _ from 'lodash';
+import { ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
+import { ROLE } from '@/constant/allowedRoles';
 
 // @ GET ALL ORDER
+export const getAllOrders = async (req, res, next) => {
+    const page = req.query.page ? +req.query.page : 1;
+    req.query.limit = String(req.query.limit || 10);
+    const searchString = req.query.rawsearch;
+    const searchQuery = searchString ? { 'customerInfo.name': { $regex: searchString, $options: 'i' } } : {};
+    const features = new APIQuery(Order.find(searchQuery), req.query);
+    features.filter().sort().limitFields().search().paginate();
+
+    const [orders, totalDocs] = await Promise.all([features.query, features.count()]);
+    const totalPages = Math.ceil(Number(totalDocs) / +req.query.limit);
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: {
+                orders,
+                page,
+                totalDocs,
+                totalPages,
+            },
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+};
+
 export const getAllOrdersByUser = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
     const page = req.query.page ? +req.query.page : 1;
@@ -99,5 +127,297 @@ export const getDetailedOrder = async (req: Request, res: Response, next: NextFu
         .status(StatusCodes.OK)
         .json(customResponse({ data: response, success: true, status: StatusCodes.OK, message: ReasonPhrases.OK }));
 };
+//@POST Set order status to cancelled
+export const cancelOrder = async (req, res, next) => {
+    const foundedOrder = await Order.findOne({ _id: req.body.orderId });
 
+    if (!foundedOrder) {
+        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+    }
 
+    if (foundedOrder.orderStatus === ORDER_STATUS.CANCELLED) {
+        throw new NotAcceptableError(`You cannot cancel this order because it was cancelled before. `);
+    }
+
+    if (foundedOrder.orderStatus !== ORDER_STATUS.DELIVERED && foundedOrder.orderStatus !== ORDER_STATUS.DONE) {
+        if (req.role !== ROLE.ADMIN && foundedOrder.orderStatus !== ORDER_STATUS.PENDING) {
+            throw new NotAcceptableError('Bạn không được phép hủy đơn vui lòng liên hệ nếu có vấn đề');
+        }
+        if (req.role === ROLE.ADMIN) {
+            foundedOrder.canceledBy = ROLE.ADMIN;
+        }
+
+        foundedOrder.orderStatus = ORDER_STATUS.CANCELLED;
+        foundedOrder.description = req.body.description ?? '';
+        foundedOrder.save();
+
+        // Update stock
+        await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
+
+        const template = {
+            content: {
+                title: `${req.role === ROLE.ADMIN ? 'Đơn hàng của bạn đã bị hủy bởi admin' : 'Đơn hàng của bạn đã bị hủy'}`,
+                description: `${req.role === ROLE.ADMIN ? `Đơn hàng của bạn đã bị hủy bởi admin với lý do ${foundedOrder.description}, ${foundedOrder.isPaid ? `Rất xin lỗi vì sự bất tiện này hãy liên hệ ngay với chúng tôi qua số điện thoại +84 123 456 789 để cửa hàng hoàn lại ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(foundedOrder.totalPrice || 0)} cho bạn ` : ''} dưới đây là thông tin đơn hàng:` : `Bạn vừa hủy một đơn hàng với lý do ${foundedOrder.description} từ AdShop thông tin đơn hàng:`}`,
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+            },
+            product: {
+                items: foundedOrder.items,
+                shippingfee: foundedOrder.shippingFee,
+                totalPrice: foundedOrder.totalPrice,
+            },
+            subject: '[Verta-Shop] - Đơn hàng của bạn đã bị hủy',
+            link: {
+                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkName: `Kiểm tra đơn hàng`,
+            },
+            user: {
+                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
+                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+            },
+        };
+        await sendMail({
+            email: foundedOrder.customerInfo.email,
+            template,
+            type: 'UpdateStatusOrder',
+        });
+    } else {
+        throw new NotAcceptableError(`Đơn hàng của bạn đã được giao không thể hủy đơn`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: 'Your order is cancelled.',
+        }),
+    );
+};
+// @Set order status to confirmed
+export const confirmOrder = async (req, res, next) => {
+    if (!req.role || req.role !== ROLE.ADMIN) {
+        throw new NotAcceptableError('Only admin can access.');
+    }
+
+    const foundedOrder = await Order.findOne({ _id: req.body.orderId });
+
+    if (!foundedOrder) {
+        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+    }
+    const productIds = foundedOrder.items.map((item) => item.productId);
+
+    if (foundedOrder.orderStatus === ORDER_STATUS.PENDING) {
+        foundedOrder.orderStatus = ORDER_STATUS.CONFIRMED;
+        foundedOrder.save();
+        const template = {
+            content: {
+                title: `Đơn hàng của bạn đã được xác nhận`,
+                description: `Chúng tôi xin thông báo rằng đơn hàng của bạn với mã đơn hàng ${req.body.orderId} đã được xác nhận thành công. Đội ngũ của chúng tôi sẽ bắt đầu xử lý đơn hàng trong thời gian sớm nhất.`,
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+            },
+            product: {
+                items: foundedOrder.items,
+                shippingfee: foundedOrder.shippingFee,
+                totalPrice: foundedOrder.totalPrice,
+            },
+            subject: '[Verta-Shop] - Đơn hàng của bạn đã được xác nhận',
+            link: {
+                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkName: `Kiểm tra đơn hàng`,
+            },
+            user: {
+                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
+                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+            },
+        };
+        await sendMail({
+            email: foundedOrder.customerInfo.email,
+            template,
+            type: 'UpdateStatusOrder',
+        });
+    } else {
+        throw new BadRequestError(`Your order is confirmed.`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: 'Your order is confirmed.',
+        }),
+    );
+};
+// @Set order status to shipping
+export const shippingOrder = async (req, res, next) => {
+    if (!req.role || req.role !== ROLE.ADMIN) {
+        throw new NotAcceptableError('Only admin can access.');
+    }
+
+    const foundedOrder = await Order.findOne({
+        _id: req.body.orderId,
+    });
+
+    if (!foundedOrder) {
+        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+    }
+
+    if (foundedOrder.orderStatus === ORDER_STATUS.CONFIRMED) {
+        foundedOrder.orderStatus = ORDER_STATUS.SHIPPING;
+        await foundedOrder.save();
+
+        const template = {
+            content: {
+                title: `Đơn hàng của bạn đang được giao`,
+                description: `Đơn hàng của đang được giao tới bạn vui lòng để ý điện thoại. Dưới đây là thông tin đơn hàng của bạn:`,
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+            },
+            product: {
+                items: foundedOrder.items,
+                shippingfee: foundedOrder.shippingFee,
+                totalPrice: foundedOrder.totalPrice,
+            },
+            subject: '[Verta-Shop] - Đơn hàng của bạn đang được giao',
+            link: {
+                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkName: `Kiểm tra đơn hàng`,
+            },
+            user: {
+                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
+                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+            },
+        };
+        await sendMail({
+            email: foundedOrder.customerInfo.email,
+            template,
+            type: 'UpdateStatusOrder',
+        });
+    } else {
+        throw new BadRequestError(`Your order is not confirmed.`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: 'Your order is on delivery.',
+        }),
+    );
+};
+// @ Set order status to delivered
+export const deliverOrder = async (req, res, next) => {
+    if (!req.role || req.role !== ROLE.ADMIN) {
+        throw new NotAcceptableError('Only admin can access.');
+    }
+
+    const foundedOrder = await Order.findOne({ _id: req.body.orderId });
+
+    if (!foundedOrder) {
+        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+    }
+
+    if (foundedOrder.orderStatus === ORDER_STATUS.SHIPPING) {
+        foundedOrder.orderStatus = ORDER_STATUS.DELIVERED;
+        foundedOrder.save();
+        const template = {
+            content: {
+                title: `Đơn hàng của bạn đã được giao thành công`,
+                description: `Đơn hàng của bạn đã được xác nhận là giao thành công bởi người vận chuyển. Dưới đây là thông tin đơn hàng của bạn`,
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                warning: `Nếu bạn chưa nhận được hàng vui lòng liên hệ tới email của shop: adshop5785@gmail.com. Nếu đã nhận được hàng bạn vui lòng lên xác nhận lại tại trang đơn hàng của bạn. Trong trường hợp bạn đã nhận được hàng dựa theo chính sách chúng tôi sẽ cập nhật đơn hàng sang trạng thái hoàn thành sau 3 ngày!`,
+            },
+            product: {
+                items: foundedOrder.items,
+                shippingfee: foundedOrder.shippingFee,
+                totalPrice: foundedOrder.totalPrice,
+            },
+            subject: '[Verta-Shop] - Đơn hàng của bạn đã được giao thành công',
+            link: {
+                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkName: `Kiểm tra đơn hàng`,
+            },
+            user: {
+                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
+                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+            },
+        };
+        await sendMail({
+            email: foundedOrder.customerInfo.email,
+            template,
+            type: 'UpdateStatusOrder',
+        });
+    } else {
+        throw new BadRequestError(`Your order is delivered.`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: 'This order is delivered.',
+        }),
+    );
+};
+// @Set order status to done
+export const finishOrder = async (req, res, next) => {
+    const foundedOrder = await Order.findOne({ _id: req.body.orderId });
+
+    if (!foundedOrder) {
+        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+    }
+
+    if (foundedOrder.orderStatus === ORDER_STATUS.DELIVERED) {
+        foundedOrder.orderStatus = ORDER_STATUS.DONE;
+        foundedOrder.isPaid = true;
+        foundedOrder.save();
+        const template = {
+            content: {
+                title: `Đơn hàng của bạn đã hoàn tất`,
+                description: `Cảm ơn bạn đã tin tưởng và lựa chọn AdShop cho nhu cầu mua sắm của mình.Nếu bạn cần hỗ trợ hoặc có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi`,
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+            },
+            product: {
+                items: foundedOrder.items,
+                shippingfee: foundedOrder.shippingFee,
+                totalPrice: foundedOrder.totalPrice,
+            },
+            subject: '[Verta-Shop] - Đơn hàng của bạn đã hoàn thành',
+            link: {
+                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkName: `Kiểm tra đơn hàng`,
+            },
+            user: {
+                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
+                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
+                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
+                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+            },
+        };
+        await sendMail({
+            email: foundedOrder.customerInfo.email,
+            template,
+            type: 'UpdateStatusOrder',
+        });
+    } else {
+        throw new BadRequestError(`Your order is done.`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: 'Your order is done.',
+        }),
+    );
+};

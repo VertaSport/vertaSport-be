@@ -7,12 +7,9 @@ import PayOS from '@payos/node';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { inventoryService } from '.';
+import config from '@/config/env.config';
 
-const payOS = new PayOS(
-    process.env.PAYOS_CLIENT_ID as string,
-    process.env.PAYOS_API_KEY as string,
-    process.env.PAYOS_CHECKSUM_KEY as string,
-);
+const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
 
 export const createPayOsPayment = async (req: Request, res: Response, next: NextFunction) => {
     const { amount, items, cancelUrl, returnUrl } = req.body;
@@ -20,8 +17,6 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const expireAt = 5 * 60; // 5 minutes
 
     await inventoryService.checkProductStatus(req.body.items);
-
-    await inventoryService.updateStockOnCreateOrder(req.body.items);
 
     const order = new Order({
         ...req.body,
@@ -43,6 +38,8 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     };
 
     const paymentLinkRes = await payOS.createPaymentLink(body);
+
+    await inventoryService.updateStockOnCreateOrder(req.body.items);
 
     const data = {
         checkoutUrl: paymentLinkRes.checkoutUrl,

@@ -52,7 +52,7 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.pre('save', async function (next) {
     if (this.isNew || this.isModified('password')) {
-        // await mongoose.model('Cart').create({ userId: this._id });
+        await mongoose.model('Cart').create({ userId: this._id });
         const saltRounds = 10;
         this.password = await bcrypt.hash(this.password, saltRounds);
     }

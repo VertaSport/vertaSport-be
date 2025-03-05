@@ -6,8 +6,11 @@ export interface ItemOrder {
     name: string;
     quantity: number;
     price: number;
+    size: string;
+    color: string;
     image: string;
     isReviewed: boolean;
+    isReviewDisabled: boolean;
 }
 
 export interface OrderSchema extends mongoose.Document {

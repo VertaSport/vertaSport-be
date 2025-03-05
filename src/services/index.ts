@@ -6,3 +6,5 @@ export * as inventoryService from './inventory.service';
 export * as shippingService from './shipping.service';
 export * as userService from './user.service';
 export * as payosService from './payos.service';
+export * as addressService from './address.service';
+export * as reviewsService from './review.service';
