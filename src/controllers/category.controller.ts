@@ -21,6 +21,22 @@ export const getAllCate = asyncHandler(async (req: Request, res: Response, next:
         }),
     );
 });
+export const getCateDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const cateId = req.params.cateId;
+    const cate = await Category.findById(cateId).populate('items');
+    if (!cate) {
+        throw new BadRequestError('Category not found');
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: cate,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
 
 export const createCate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     /*
