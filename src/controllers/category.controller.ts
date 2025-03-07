@@ -92,7 +92,7 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response, n
     }
     const findCate = await Category.findOne({ name: req.body.name });
 
-    if (findCate && findCate._id.toString() !== parentCateId) {
+    if (findCate && findCate._id.toString() !== currentCate._id.toString()) {
         throw new BadRequestError('Category already exists');
     }
     if (req.body.items) {

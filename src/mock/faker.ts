@@ -55,7 +55,7 @@ export function createRandomCate(subids: string[]) {
 
 export function createRandomSubCate() {
     return {
-        name: faker.commerce.department(),
+        name: faker.commerce.department() + faker.commerce.department(),
     };
 }
 
