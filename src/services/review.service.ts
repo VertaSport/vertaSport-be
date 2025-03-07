@@ -7,7 +7,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 export const createReview = async (req: Request, res: Response, next: NextFunction) => {
-    const { orderId, variantId } = req.body;
+    const { orderId, productId } = req.body;
 
     const order = await Order.findOne({
         _id: orderId,
@@ -17,32 +17,40 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
         throw new NotFoundError(`${ReasonPhrases.NOT_FOUND} with order id ${orderId}`);
     }
 
-    const variant = order.items.find((item) => {
-        return item.variantId.toString() === variantId;
+    const productVariants = order.items.filter((item) => {
+        return item.productId.toString() === productId;
     });
 
-    if (!variant) {
-        throw new NotFoundError(`${ReasonPhrases.NOT_FOUND} with item in order with variant id ${variantId}`);
+    if (productVariants.length === 0) {
+        throw new BadRequestError(`${ReasonPhrases.BAD_REQUEST} không tìm thấy sản phẩm với id ${productId}`);
     }
 
-    if (variant.isReviewed || variant.isReviewDisabled) {
-        throw new BadRequestError(`${ReasonPhrases.BAD_REQUEST}: This variant has already been reviewed.`);
+    const isReviewd = productVariants.every((item) => {
+        return item.isReviewed === true;
+    });
+
+    if (isReviewd) {
+        throw new BadRequestError(`${ReasonPhrases.BAD_REQUEST}: Sản phẩm này đã được đánh giá.`);
     }
+
+    const variantsData = productVariants.map((item) => ({
+        name: item.name,
+        size: item.size,
+        color: item.color,
+        variantId: item.variantId,
+    }));
+
 
     const review = new Reviews({
         ...req.body,
-        variant: {
-            name: variant.name,
-            size: variant.size,
-            color: variant.color,
-        },
+        variants: variantsData,
         userId: req.userId,
     });
 
     await review.save();
 
     order.items.forEach((item) => {
-        if (item.variantId.toString() === variantId) {
+        if (item.productId.toString() === productId) {
             item.isReviewed = true;
         }
     });
@@ -107,6 +115,7 @@ export const useGetAllReviewStar = async (req: Request, res: Response, next: Nex
     })
         .select('rating')
         .lean();
+
     const reviewsCount = reviewsStar.length;
     const everage = (reviewsStar.reduce((acc, curr) => acc + curr.rating, 0) / reviewsCount).toFixed(1);
 
