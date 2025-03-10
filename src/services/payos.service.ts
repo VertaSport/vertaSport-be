@@ -87,7 +87,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
         if (webhookData?.code === '00') {
             const orderCode = webhookData.orderCode;
             const foundedOrder = await Order.findOneAndUpdate(
-                { orderCode },
+                { orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
                 {
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
@@ -129,6 +129,7 @@ export const updateStockCancelOrderPayos = async (req: Request, res: Response, n
             orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
         },
     ).lean();
+
     if (!foundedOrder) {
         throw new NotFoundError(`${ReasonPhrases.NOT_FOUND} order with id: ${req.body.orderId}`);
     }
