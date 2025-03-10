@@ -8,6 +8,7 @@ router.post('/create-order', authenticate, orderController.createOrder);
 router.get('/my-orders', authenticate, orderController.getMyOrder);
 router.get('/my-orders/:id', authenticate, orderController.getDetailOrder);
 router.get('/all', authenticate, orderController.getAllOrders);
+router.get('/history/:id', authenticate, orderController.getHistory);
 
 router.patch('/cancel', authenticate, orderController.cancelOrder);
 router.patch('/confirm', authenticate, orderController.confirmOrder);

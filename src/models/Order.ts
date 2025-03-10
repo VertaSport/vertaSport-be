@@ -52,6 +52,42 @@ const OrderItemSchema = new mongoose.Schema(
     },
 );
 
+const StatusLogSchema = new mongoose.Schema(
+    {
+        status: {
+            type: String,
+            required: true,
+            enum: Object.values(ORDER_STATUS),
+        },
+        updatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        updatedByName: {
+            type: String,
+            required: true,
+        },
+        updatedByRole: {
+            type: String,
+            required: true,
+            enum: Object.values(ROLE),
+        },
+        description: {
+            type: String,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    {
+        _id: false,
+        id: false,
+        versionKey: false,
+    },
+);
+
 const orderSchema = new mongoose.Schema(
     {
         userId: {
@@ -104,6 +140,7 @@ const orderSchema = new mongoose.Schema(
             default: 'none',
             enum: [...Object.values(ROLE), 'none'],
         },
+        statusLogs: [StatusLogSchema],
         description: {
             type: String,
         },
@@ -124,4 +161,5 @@ const orderSchema = new mongoose.Schema(
         timestamps: true,
     },
 );
+
 export default mongoose.model<OrderSchema>('Order', orderSchema);

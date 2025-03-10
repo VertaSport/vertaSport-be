@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+export interface StatusLog {
+    status: string;
+    updatedBy: mongoose.Types.ObjectId;
+    updatedByName: string;
+    updatedByRole: string;
+    description?: string;
+    updatedAt: Date;
+}
 export interface ItemOrder {
     productId: string;
     variantId: string;
@@ -44,4 +52,5 @@ export interface OrderSchema extends mongoose.Document {
     orderStatus: string;
     expiredAt: string;
     orderPaymentStatus: string;
+    statusLogs: StatusLog[];
 }
