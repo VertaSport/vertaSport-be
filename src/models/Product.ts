@@ -51,8 +51,7 @@ const ProductSchema = new Schema<IProductSchema>(
 );
 
 ProductSchema.pre('save', async function (next) {
-    if (this.isNew || this.isModified('password')) {
-        const saltRounds = 10;
+    if (this.isNew) {
         const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
         this.code = convertString(this.name.substring(0, 5), '').toUpperCase() + randomString;
     }
