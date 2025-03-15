@@ -11,6 +11,7 @@ import Variant from '@/models/Variant';
 import _ from 'lodash';
 import { ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
 import { ROLE } from '@/constant/allowedRoles';
+import User from '@/models/User';
 
 // @ GET ALL ORDER
 export const getAllOrders = async (req, res, next) => {
@@ -130,6 +131,14 @@ export const getDetailedOrder = async (req: Request, res: Response, next: NextFu
 //@POST Set order status to cancelled
 export const cancelOrder = async (req, res, next) => {
     const foundedOrder = await Order.findOne({ _id: req.body.orderId });
+    const currentUser = await User.findById(req.userId).select('name email');
+    const updaterName = currentUser
+        ? req.role === ROLE.ADMIN
+            ? `Admin - ${currentUser.name}`
+            : `Khách hàng - ${currentUser.name}`
+        : req.role === ROLE.ADMIN
+          ? 'Admin'
+          : 'Khách hàng';
 
     if (!foundedOrder) {
         throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
@@ -143,13 +152,24 @@ export const cancelOrder = async (req, res, next) => {
         if (req.role !== ROLE.ADMIN && foundedOrder.orderStatus !== ORDER_STATUS.PENDING) {
             throw new NotAcceptableError('Bạn không được phép hủy đơn vui lòng liên hệ nếu có vấn đề');
         }
+
+        const oldStatus = foundedOrder.orderStatus;
+
         if (req.role === ROLE.ADMIN) {
             foundedOrder.canceledBy = ROLE.ADMIN;
         }
-
         foundedOrder.orderStatus = ORDER_STATUS.CANCELLED;
         foundedOrder.description = req.body.description ?? '';
-        foundedOrder.save();
+        foundedOrder.statusLogs.push({
+            status: ORDER_STATUS.CANCELLED,
+            updatedBy: req.userId,
+            updatedByName: updaterName,
+            updatedByRole: req.role || 'USER',
+            description: req.body.description ?? `Chuyển từ ${oldStatus} sang ${ORDER_STATUS.CANCELLED}`,
+            updatedAt: new Date(),
+        });
+
+        await foundedOrder.save();
 
         // Update stock
         await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
@@ -200,16 +220,33 @@ export const confirmOrder = async (req, res, next) => {
     if (!req.role || req.role !== ROLE.ADMIN) {
         throw new NotAcceptableError('Only admin can access.');
     }
+    const currentUser = await User.findById(req.userId).select('name email');
+    const updaterName = currentUser
+        ? req.role === ROLE.ADMIN
+            ? `Admin - ${currentUser.name}`
+            : `Khách hàng - ${currentUser.name}`
+        : req.role === ROLE.ADMIN
+          ? 'Admin'
+          : 'Khách hàng';
 
     const foundedOrder = await Order.findOne({ _id: req.body.orderId });
 
     if (!foundedOrder) {
         throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
     }
-    const productIds = foundedOrder.items.map((item) => item.productId);
-
+    const oldStatus = foundedOrder.orderStatus;
     if (foundedOrder.orderStatus === ORDER_STATUS.PENDING) {
         foundedOrder.orderStatus = ORDER_STATUS.CONFIRMED;
+        foundedOrder.description = req.body.description ?? '';
+        foundedOrder.statusLogs.push({
+            status: ORDER_STATUS.CONFIRMED,
+            updatedBy: req.userId,
+            updatedByName: updaterName,
+            updatedByRole: req.role || 'USER',
+            description: req.body.description ?? `Chuyển từ ${oldStatus} sang ${ORDER_STATUS.CONFIRMED}`,
+            updatedAt: new Date(),
+        });
+
         foundedOrder.save();
         const template = {
             content: {
@@ -257,7 +294,14 @@ export const shippingOrder = async (req, res, next) => {
     if (!req.role || req.role !== ROLE.ADMIN) {
         throw new NotAcceptableError('Only admin can access.');
     }
-
+    const currentUser = await User.findById(req.userId).select('name email');
+    const updaterName = currentUser
+        ? req.role === ROLE.ADMIN
+            ? `Admin - ${currentUser.name}`
+            : `Khách hàng - ${currentUser.name}`
+        : req.role === ROLE.ADMIN
+          ? 'Admin'
+          : 'Khách hàng';
     const foundedOrder = await Order.findOne({
         _id: req.body.orderId,
     });
@@ -265,9 +309,19 @@ export const shippingOrder = async (req, res, next) => {
     if (!foundedOrder) {
         throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
     }
+    const oldStatus = foundedOrder.orderStatus;
 
     if (foundedOrder.orderStatus === ORDER_STATUS.CONFIRMED) {
         foundedOrder.orderStatus = ORDER_STATUS.SHIPPING;
+        foundedOrder.description = req.body.description ?? '';
+        foundedOrder.statusLogs.push({
+            status: ORDER_STATUS.SHIPPING,
+            updatedBy: req.userId,
+            updatedByName: updaterName,
+            updatedByRole: req.role || 'USER',
+            description: req.body.description ?? `Chuyển từ ${oldStatus} sang ${ORDER_STATUS.SHIPPING}`,
+            updatedAt: new Date(),
+        });
         await foundedOrder.save();
 
         const template = {
@@ -317,14 +371,32 @@ export const deliverOrder = async (req, res, next) => {
         throw new NotAcceptableError('Only admin can access.');
     }
 
+    const currentUser = await User.findById(req.userId).select('name email');
+    const updaterName = currentUser
+        ? req.role === ROLE.ADMIN
+            ? `Admin - ${currentUser.name}`
+            : `Khách hàng - ${currentUser.name}`
+        : req.role === ROLE.ADMIN
+          ? 'Admin'
+          : 'Khách hàng';
+
     const foundedOrder = await Order.findOne({ _id: req.body.orderId });
 
     if (!foundedOrder) {
         throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
     }
-
+    const oldStatus = foundedOrder.orderStatus;
     if (foundedOrder.orderStatus === ORDER_STATUS.SHIPPING) {
         foundedOrder.orderStatus = ORDER_STATUS.DELIVERED;
+        foundedOrder.description = req.body.description ?? '';
+        foundedOrder.statusLogs.push({
+            status: ORDER_STATUS.DELIVERED,
+            updatedBy: req.userId,
+            updatedByName: updaterName,
+            updatedByRole: req.role || 'USER',
+            description: req.body.description ?? `Chuyển từ ${oldStatus} sang ${ORDER_STATUS.DELIVERED}`,
+            updatedAt: new Date(),
+        });
         foundedOrder.save();
         const template = {
             content: {
@@ -371,14 +443,31 @@ export const deliverOrder = async (req, res, next) => {
 // @Set order status to done
 export const finishOrder = async (req, res, next) => {
     const foundedOrder = await Order.findOne({ _id: req.body.orderId });
-
+    const currentUser = await User.findById(req.userId).select('name email');
+    const updaterName = currentUser
+        ? req.role === ROLE.ADMIN
+            ? `Admin - ${currentUser.name}`
+            : `Khách hàng - ${currentUser.name}`
+        : req.role === ROLE.ADMIN
+          ? 'Admin'
+          : 'Khách hàng';
     if (!foundedOrder) {
         throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
     }
-
+    const oldStatus = foundedOrder.orderStatus;
     if (foundedOrder.orderStatus === ORDER_STATUS.DELIVERED) {
         foundedOrder.orderStatus = ORDER_STATUS.DONE;
         foundedOrder.isPaid = true;
+        foundedOrder.description = req.body.description ?? '';
+        foundedOrder.statusLogs.push({
+            status: ORDER_STATUS.DONE,
+            updatedBy: req.userId,
+            updatedByName: updaterName,
+            updatedByRole: req.role || 'USER',
+            description: req.body.description ?? `Chuyển từ ${oldStatus} sang ${ORDER_STATUS.DONE}`,
+            updatedAt: new Date(),
+        });
+
         foundedOrder.save();
         const template = {
             content: {
@@ -418,6 +507,24 @@ export const finishOrder = async (req, res, next) => {
             success: true,
             status: StatusCodes.OK,
             message: 'Your order is done.',
+        }),
+    );
+};
+
+export const getOrderStatusHistory = async (req: Request, res: Response, next) => {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId).select('statusLogs').populate('statusLogs.updatedBy', 'email name');
+
+    if (!order) {
+        throw new NotFoundError(`Order with id ${orderId} not found`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: order.statusLogs,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
         }),
     );
 };

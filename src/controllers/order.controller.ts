@@ -32,3 +32,6 @@ export const finishOrder = asyncHandler(async (req, res, next) => {
 export const deliverOrder = asyncHandler(async (req, res, next) => {
     return await orderService.deliverOrder(req, res, next);
 });
+export const getHistory = asyncHandler(async (req, res, next) => {
+    return await orderService.getOrderStatusHistory(req, res, next);
+});

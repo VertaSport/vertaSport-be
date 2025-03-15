@@ -9,13 +9,13 @@ const HOSTNAME = config.hostname;
 let server: any;
 connectDB().then(async () => {
     server = app.listen(PORT, `${HOSTNAME}`, async () => {
-        const ngrok = await import('ngrok');
-        const ngrokUrl = await ngrok.connect({ addr: PORT, authtoken: process.env.NGROK_AUTHTOKEN });
+        // const ngrok = await import('ngrok');
+        // const ngrokUrl = await ngrok.connect({ addr: PORT, authtoken: process.env.NGROK_AUTHTOKEN });
 
-        await confirmWebhook(`${ngrokUrl}/webhook`);
+        // await confirmWebhook(`${ngrokUrl}/webhook`);
 
         console.log(`Listening to port ${PORT}`);
-        console.log(`Ingress established at: ${ngrokUrl}`);
+        // console.log(`Ingress established at: ${ngrokUrl}`);
     });
 });
 

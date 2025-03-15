@@ -13,10 +13,20 @@ const reviewsSchema = new mongoose.Schema(
             required: true,
             ref: 'Product',
         },
-        variant: {
-            size: String,
-            color: String,
-            name: String,
+        variants: {
+            type: [
+                {
+                    variantId: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        required: true,
+                        ref: 'Variant',
+                    },
+                    size: { type: String, default: '' },
+                    color: { type: String, default: '' },
+                    name: { type: String, default: '' },
+                },
+            ],
+            default: [],
         },
         rating: {
             type: Number,
