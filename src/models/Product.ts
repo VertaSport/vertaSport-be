@@ -1,5 +1,6 @@
 import mongoose, { Document, model, ObjectId, Schema } from 'mongoose';
 import { SizeEnum } from '@/constant/sizeType';
+import { convertString } from '@/utils/convertString';
 
 export interface IProductType {
     hasColor: boolean;
@@ -7,6 +8,7 @@ export interface IProductType {
 }
 
 export interface IProductSchema extends Document {
+    code: string;
     name: string;
     price: number;
     summary: string;
@@ -24,6 +26,7 @@ export interface IProductSchema extends Document {
 
 const ProductSchema = new Schema<IProductSchema>(
     {
+        code: { type: String, unique: true },
         name: { type: String, required: true },
         price: { type: Number, required: true },
         summary: { type: String, required: true },
@@ -46,6 +49,15 @@ const ProductSchema = new Schema<IProductSchema>(
         versionKey: false,
     },
 );
+
+ProductSchema.pre('save', async function (next) {
+    if (this.isNew || this.isModified('password')) {
+        const saltRounds = 10;
+        const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
+        this.code = convertString(this.name.substring(0, 5), '').toUpperCase() + randomString;
+    }
+    next();
+});
 
 const Product = model<IProductSchema>('Product', ProductSchema);
 export default Product;

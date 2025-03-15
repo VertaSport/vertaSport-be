@@ -6,10 +6,10 @@ function removeAccents(str: string) {
         .replace(/Đ/g, 'D');
 }
 
-export function convertString(str: string) {
+export function convertString(str: string, gap: string = '_') {
     const noAccents = removeAccents(str).toLowerCase();
 
-    const withUnderscores = noAccents.replace(/[^a-z0-9\s]/g, '_');
+    const withUnderscores = noAccents.replace(/[^a-z0-9\s]/g, gap);
 
-    return withUnderscores.replace(/\s+/g, '_');
+    return withUnderscores.replace(/\s+/g, gap);
 }
