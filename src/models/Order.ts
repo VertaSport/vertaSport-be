@@ -10,6 +10,7 @@ const OrderItemSchema = new mongoose.Schema(
             required: true,
             ref: 'Product',
         },
+
         variantId: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
@@ -130,6 +131,10 @@ const orderSchema = new mongoose.Schema(
             required: true,
             enum: Object.values(PAYMENT_METHOD),
             default: PAYMENT_METHOD.CASH,
+        },
+        isDeleteForUser: {
+            type: Boolean,
+            default: false,
         },
         isPaid: {
             type: Boolean,

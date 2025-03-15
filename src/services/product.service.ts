@@ -155,7 +155,7 @@ export const updateVariant = async (id: string, dto: any) => {
 };
 
 export const getProductDetails = async (id: string) => {
-    const product = await Product.findById(id)
+    const product = await Product.findOne({ _id: id, isDeleted: false, isHide: false })
         .populate({
             path: 'variants',
             select: '-createdAt -updatedAt -imageRef',

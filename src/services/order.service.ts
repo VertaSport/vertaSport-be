@@ -44,6 +44,7 @@ export const getAllOrdersByUser = async (req: Request, res: Response, next: Next
     const userId = req.userId;
     const page = req.query.page ? +req.query.page : 1;
     req.query.limit = String(req.query.limit || 10);
+    req.query.isDeleteForUser = 'false';
 
     const features = new APIQuery(Order.find({ userId }), req.query);
     features.filter().sort().limitFields().search().paginate();

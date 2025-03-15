@@ -19,5 +19,6 @@ productRouter.get('/', productController.getAllProductsClient);
 productRouter.get('/related/:categoryId', productController.getProductRelated);
 productRouter.patch('/update/:idPro', productController.updateProduct);
 productRouter.get('/:id', productController.getProductDetails);
+productRouter.delete('/:id', productController.deleteProduct);
 
 export default productRouter;

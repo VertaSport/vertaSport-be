@@ -1,9 +1,12 @@
 import { SizeEnum } from '@/constant/sizeType';
+import { BadRequestError } from '@/error/customError';
 import { QueryString } from '@/helpers/apiQuery';
 import asyncHandler from '@/helpers/asyncHandler';
 import customResponse from '@/helpers/response';
+import Cart from '@/models/Cart';
 import Category from '@/models/Category';
 import { IColorRaw } from '@/models/Color';
+import Order from '@/models/Order';
 import Product from '@/models/Product';
 import SubCategory from '@/models/SubCategory';
 import { productService } from '@/services';
@@ -62,6 +65,20 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response, ne
         }),
     );
 });
+export const deleteProduct = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    await Cart.updateMany({ 'items.product': id }, { $pull: { items: { product: id } } });
+    await productService.deleteProduct(id);
+    await Order.updateMany({ 'items.productId': id }, { $set: { isDeleteForUser: true } });
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
+        }),
+    );
+});
 
 // Create a new variant
 export const createVariant = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -88,6 +105,7 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
     query.limit = String(limit);
     query.filterSize = filterSize;
     query.filterColor = filterColor;
+    query.isDeleted = String(false);
 
     if (query.filterSize === null) delete query.filterSize;
     if (query.filterColor === null) delete query.filterColor;
@@ -118,6 +136,7 @@ export const getAllProductsAdmin = asyncHandler(async (req: Request, res: Respon
 
     query.page = String(page);
     query.limit = String(limit);
+    query.isDeleted = String(false);
     query.filterSize = filterSize;
     query.filterColor = filterColor;
 
@@ -199,6 +218,8 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
         Category.findById(product.categories[0]).select('name _id'),
         Category.findById(product.categories[1]).select('name _id'),
     ]);
+
+
     const result = { ...product, categories: [category, subCategory].filter((el) => el !== null) };
     return res.status(StatusCodes.OK).json(
         customResponse({
