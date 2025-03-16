@@ -51,6 +51,9 @@ export const createCate = asyncHandler(async (req: Request, res: Response, next:
   */
     const idSubCate = [];
     const findCate = await Category.findOne({ name: req.body.name });
+    if (req.body.items.length === 0) {
+        throw new BadRequestError('Danh mục con không được để trống');
+    }
     if (hasDuplicates(req.body.items)) {
         throw new BadRequestError('Danh mục con không được trùng nhau');
     }
@@ -98,12 +101,12 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response, n
         throw new BadRequestError('Danh mục con không được trùng nhau');
     }
     if (!currentCate) {
-        throw new BadRequestError('Category not found');
+        throw new BadRequestError('Không tìm thấy danh mục');
     }
     const findCate = await Category.findOne({ name: req.body.name });
 
     if (findCate && findCate._id.toString() !== currentCate._id.toString()) {
-        throw new BadRequestError('Category already exists');
+        throw new BadRequestError('Danh mục đã tồn tại');
     }
     if (req.body.items) {
         await Promise.all(
