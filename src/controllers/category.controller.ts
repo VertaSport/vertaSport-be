@@ -7,6 +7,10 @@ import SubCategory from '@/models/SubCategory';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
+const hasDuplicates = (arr: string[]): boolean => {
+    return new Set(arr).size !== arr.length;
+};
+
 export const getAllCate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const feature = new APIQuery(Category.find().populate('items'), req.query);
     feature.filter().sort().limitFields();
@@ -47,6 +51,9 @@ export const createCate = asyncHandler(async (req: Request, res: Response, next:
   */
     const idSubCate = [];
     const findCate = await Category.findOne({ name: req.body.name });
+    if (hasDuplicates(req.body.items)) {
+        throw new BadRequestError('Danh mục con không được trùng nhau');
+    }
     if (findCate) {
         throw new BadRequestError(`Danh mục ${req.body.name} đã tồn tại`);
     }
@@ -87,6 +94,9 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response, n
     const idSubCate = [];
     const parentCateId = req.params.cateId;
     const currentCate = await Category.findById(parentCateId);
+    if (hasDuplicates(req.body.items.map((item) => item.name))) {
+        throw new BadRequestError('Danh mục con không được trùng nhau');
+    }
     if (!currentCate) {
         throw new BadRequestError('Category not found');
     }
