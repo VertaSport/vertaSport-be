@@ -97,6 +97,7 @@ const orderSchema = new mongoose.Schema(
         },
         orderCode: {
             type: Number,
+            required: true,
         },
         paymentLinkId: {
             type: String,

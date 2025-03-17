@@ -68,9 +68,11 @@ export const getAllOrdersByUser = async (req: Request, res: Response, next: Next
 // @ CREATE ORDER
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
+    const orderCode = Number(String(Date.now()).slice(-6));
     const order = new Order({
         ...req.body,
         userId: req.userId,
+        orderCode,
     });
     await order.save();
     const template = {

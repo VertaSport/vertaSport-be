@@ -1,4 +1,4 @@
-import { ORDER_PAYMENT_STATUS } from '@/constant/order';
+import { ORDER_PAYMENT_STATUS, ORDER_STATUS } from '@/constant/order';
 import { NotFoundError } from '@/error/customError';
 import customResponse from '@/helpers/response';
 import Cart from '@/models/Cart';
@@ -10,13 +10,14 @@ import { inventoryService } from '.';
 import config from '@/config/env.config';
 
 const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
+let paymentTimeoutId: NodeJS.Timeout;
 
 export const createPayOsPayment = async (req: Request, res: Response, next: NextFunction) => {
     const { amount, items, cancelUrl, returnUrl } = req.body;
     const orderCode = Number(String(Date.now()).slice(-6));
     const expireAt = 5 * 60; // 5 minutes
 
-    await inventoryService.checkProductStatus(req.body.items);
+    await inventoryService.checkProductStatus(items);
 
     const order = new Order({
         ...req.body,
@@ -39,7 +40,22 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
 
     const paymentLinkRes = await payOS.createPaymentLink(body);
 
-    await inventoryService.updateStockOnCreateOrder(req.body.items);
+    await inventoryService.updateStockOnCreateOrder(items);
+
+    paymentTimeoutId = setTimeout(async () => {
+        await Order.findOneAndUpdate(
+            {
+                _id: saveOrder._id,
+                isPaid: false,
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING,
+            },
+            {
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
+                orderStatus: ORDER_STATUS.CANCELLED,
+            },
+        );
+        await inventoryService.updateStockOnCancelOrder(items);
+    }, expireAt * 1000);
 
     const data = {
         checkoutUrl: paymentLinkRes.checkoutUrl,
@@ -97,12 +113,12 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
             if (!foundedOrder) {
                 throw new NotFoundError(`Không tìm thấy đơn hàng với order code ${orderCode}`);
             }
+
+            clearTimeout(paymentTimeoutId);
+
             await Promise.all(
                 foundedOrder.items.map(async (product: any) => {
-                    await Cart.updateOne(
-                        { userId: foundedOrder.userId },
-                        { $pull: { items: { product: product.productId } } },
-                    );
+                    await Cart.updateOne({ userId: req.userId }, { $pull: { items: { product: product.productId } } });
                 }),
             );
         }
@@ -127,12 +143,15 @@ export const updateStockCancelOrderPayos = async (req: Request, res: Response, n
         },
         {
             orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
+            orderStatus: ORDER_STATUS.CANCELLED,
         },
     ).lean();
 
     if (!foundedOrder) {
         throw new NotFoundError(`${ReasonPhrases.NOT_FOUND} order with id: ${req.body.orderId}`);
     }
+
+    clearTimeout(paymentTimeoutId);
 
     await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
 
