@@ -37,6 +37,9 @@ const reviewsSchema = new mongoose.Schema(
         content: {
             type: String,
         },
+        isHided: {
+            type: Boolean,
+        },
     },
     {
         timestamps: true,

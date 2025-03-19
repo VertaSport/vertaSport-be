@@ -58,7 +58,7 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
             path: 'variants',
             select: 'stock',
         })
-        .select('isHide')
+        .select('isHide isDeleted')
         .lean();
 
     if (!products) throw new NotFoundError('Không tìm thấy sản phẩm');
@@ -74,6 +74,11 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
             return true;
         }
     });
+    const isDeletedProduct = products.some((item) => {
+        if (item.isDeleted) {
+            return true;
+        }
+    });
 
     if (isOutOfStock) {
         throw new NotAcceptableError('Sản phẩm đã hết hàng');
@@ -82,6 +87,8 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
     if (isHidedProduct) {
         throw new NotAcceptableError('Sản phẩm đã không tồn tại');
     }
+    
+    if (isDeletedProduct) {
+        throw new NotAcceptableError('Sản phẩm đã không tồn tại');
+    }
 };
-
-

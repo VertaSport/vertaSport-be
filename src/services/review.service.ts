@@ -40,7 +40,6 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
         variantId: item.variantId,
     }));
 
-
     const review = new Reviews({
         ...req.body,
         variants: variantsData,
@@ -70,7 +69,7 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
 export const getAllReviewsProduct = async (req: Request, res: Response, next: NextFunction) => {
     const { productId } = req.params;
     const page = req.query.page ? +req.query.page : 1;
-    const limit = req.query.limit || 10;
+    const limit = req.query.limit || 5;
     const query: QueryString = { ...req.query };
 
     query.page = String(page);
@@ -79,6 +78,7 @@ export const getAllReviewsProduct = async (req: Request, res: Response, next: Ne
     const features = new APIQuery(
         Reviews.find({
             productId: productId,
+            isHided: false,
         }).populate({
             path: 'userId',
             select: 'avatar name',
@@ -125,6 +125,80 @@ export const useGetAllReviewStar = async (req: Request, res: Response, next: Nex
                 reviewsStar,
                 everage: parseFloat(everage),
             },
+            message: ReasonPhrases.OK,
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+
+export const getAllReviews = async (req: Request, res: Response, next: NextFunction) => {
+    const page = req.query.page ? +req.query.page : 1;
+    const limit = req.query.limit || 10;
+    const query: QueryString = { ...req.query };
+
+    query.page = String(page);
+    query.limit = String(limit);
+
+    const features = new APIQuery(
+        Reviews.find().populate({
+            path: 'userId',
+            select: 'avatar name',
+        }),
+        query,
+    );
+
+    features.filter().sort().limitFields().paginate().search();
+
+    const [data, totalDocs] = await Promise.all([features.query, features.count()]);
+    const totalPages = Math.ceil(totalDocs / Number(limit));
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: {
+                data: {
+                    data: data,
+                },
+                totalPages,
+                totalDocs,
+            },
+            message: ReasonPhrases.OK,
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+
+export const hiddenReview = async (req: Request, res: Response, next: NextFunction) => {
+    const { reviewId } = req.params;
+
+    const reviewFounded = await Reviews.findOneAndUpdate({ _id: reviewId }, { isHided: true });
+
+    if (!reviewFounded) {
+        throw new NotFoundError(`Không tìm thấy đánh giá với id ${reviewId}`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
+            message: ReasonPhrases.OK,
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+export const activeReview = async (req: Request, res: Response, next: NextFunction) => {
+    const { reviewId } = req.params;
+
+    const reviewFounded = await Reviews.findOneAndUpdate({ _id: reviewId }, { isHided: false });
+
+    if (!reviewFounded) {
+        throw new NotFoundError(`Không tìm thấy đánh giá với id ${reviewId}`);
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: null,
             message: ReasonPhrases.OK,
             status: StatusCodes.OK,
             success: true,

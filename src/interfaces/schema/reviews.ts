@@ -12,4 +12,5 @@ export interface IReviewsSchema extends mongoose.Document {
     content: string;
     productId: mongoose.Schema.Types.ObjectId;
     variants: IVariant[];
+    isHided:boolean;
 }
