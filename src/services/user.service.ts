@@ -52,3 +52,34 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
         }),
     );
 };
+
+export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.userId;
+    const { name, email, avatar, avatarRef, phone, role } = req.body;
+
+    if (!name || !email) {
+        throw new BadRequestFormError('Lỗi form', {
+            field: 'name or email',
+            message: 'Tên và email là bắt buộc',
+        });
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+        { _id: userId, isActive: true },
+        { name, email, avatar, avatarRef, phone, role },
+        { new: true, runValidators: true },
+    );
+
+    if (!updatedUser) {
+        throw new UnAuthenticatedError('Tài khoản này không tồn tại hoặc chưa được kích hoạt');
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: updatedUser,
+            message: 'Cập nhật thông tin người dùng thành công',
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
