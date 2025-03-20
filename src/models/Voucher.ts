@@ -1,16 +1,52 @@
 import mongoose, { Schema } from 'mongoose';
+
 const voucherSchema = new Schema(
     {
-        name: { type: String, required: true },
-        description: { type: String },
-        discount: { type: Number, required: true },
-        forNewUser: { type: Boolean, required: true },
-        expired: { type: Date, required: true },
-        isInfinite: { type: Boolean, required: true },
-        quantity: { type: Number, required: true },
-        requiredPrice: { type: Number, required: true },
+        name: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        code: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        maxUsage: {
+            type: Number,
+            required: true,
+        },
+        discountValue: {
+            type: Number,
+            required: true,
+        },
+        status: {
+            type: Boolean,
+            default: true,
+        },
+        isOnlyForNewUser: {
+            type: Boolean,
+            default: false,
+        },
+        minimumOrderPrice: {
+            type: Number,
+        },
+        startDate: {
+            type: Date,
+        },
+        endDate: {
+            type: Date,
+        },
+        usagePerUser: {
+            type: Number,
+            required: true,
+            default: 1,
+        },
     },
-    { versionKey: false, timestamps: true },
+    {
+        timestamps: true,
+        versionKey: false,
+    },
 );
 
 export default mongoose.model('Voucher', voucherSchema);

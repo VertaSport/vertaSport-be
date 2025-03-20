@@ -1,7 +1,7 @@
 import { ROLE } from '@/constant/allowedRoles';
 import { ORDER_PAYMENT_STATUS, ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
 import { OrderSchema } from '@/interfaces/schema/order';
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 const OrderItemSchema = new mongoose.Schema(
     {
@@ -94,6 +94,14 @@ const orderSchema = new mongoose.Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
+        },
+        voucherDiscount: {
+            type: Number,
+            default: 0,
+        },
+        voucherName: {
+            type: String,
+            default: null,
         },
         orderCode: {
             type: Number,

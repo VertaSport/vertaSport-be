@@ -43,6 +43,10 @@ const UserSchema = new mongoose.Schema(
             default: ROLE.USER,
             enum: [ROLE.USER, ROLE.ADMIN],
         },
+        isOld: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,

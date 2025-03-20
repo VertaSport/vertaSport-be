@@ -10,4 +10,5 @@ export interface IUserSchema extends Document {
     avatarRef: string;
     phone: string;
     role: ROLE;
+    isOld: boolean;
 }
