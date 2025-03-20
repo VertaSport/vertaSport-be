@@ -8,6 +8,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
+
     return Promise.all(
         dataItems.map(async (item: ItemOrder) => {
             const variant = await Variant.findById(item.variantId).lean();
@@ -87,7 +88,7 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
     if (isHidedProduct) {
         throw new NotAcceptableError('Sản phẩm đã không tồn tại');
     }
-    
+
     if (isDeletedProduct) {
         throw new NotAcceptableError('Sản phẩm đã không tồn tại');
     }

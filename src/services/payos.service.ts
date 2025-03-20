@@ -8,6 +8,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { inventoryService, voucherService } from '.';
 import config from '@/config/env.config';
+import User from '@/models/User';
 
 const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
 let paymentTimeoutId: NodeJS.Timeout;
@@ -26,6 +27,10 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         voucherDiscount = voucherData.voucherDiscount;
     }
 
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+        throw new NotFoundError(`Không tìm thấy người dùng với id: ${userId}`);
+    }
     await inventoryService.checkProductStatus(items);
 
     const order = new Order({
@@ -53,6 +58,11 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const paymentLinkRes = await payOS.createPaymentLink(body);
 
     await inventoryService.updateStockOnCreateOrder(items);
+    const now = new Date();
+    if (currentUser.userIsOldWhen > now) {
+        await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
+    }
+    await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
 
     paymentTimeoutId = setTimeout(async () => {
         await Order.findOneAndUpdate(

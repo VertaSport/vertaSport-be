@@ -79,6 +79,10 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     const totalPriceNoShip = req.body.totalPrice - shippingFee;
     let voucherName = '';
     let voucherDiscount = 0;
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+        throw new NotFoundError(`Không tìm thấy người dùng với id: ${userId}`);
+    }
 
     // Check voucher
     if (voucherCode) {
@@ -121,6 +125,10 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     };
     // Update stock
     await inventoryService.updateStockOnCreateOrder(req.body.items);
+    const now = new Date();
+    if (currentUser.userIsOldWhen > now) {
+        await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
+    }
     await sendMail({ email: req.body.customerInfo.email, template, type: 'UpdateStatusOrder' });
     await Promise.all(
         req.body.items.map(async (product: any) => {

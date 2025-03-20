@@ -215,7 +215,8 @@ export const getAllVoucher = asyncHandler(async (req: Request, res: Response) =>
 export const getVoucherForNewUser = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
     const currentUser = await User.findById(userId);
-    const checkUserIsNew = !currentUser.isOld;
+    const now = new Date();
+    const checkUserIsNew = currentUser.userIsOldWhen > now;
     if (!checkUserIsNew) {
         throw new BadRequestError('Người dùng không tồn tại');
     }
