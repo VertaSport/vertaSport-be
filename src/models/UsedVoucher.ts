@@ -1,9 +1,14 @@
 import mongoose from 'mongoose';
 
-const usedVoucherSchema = new mongoose.Schema({
-    voucherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Voucher' },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    createdAt: { type: Date, default: Date.now },
-});
+const usedVoucherSchema = new mongoose.Schema(
+    {
+        voucherCode: { type: String, ref: 'Voucher', required: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        usageCount: { type: Number, default: 1 },
+    },
+    { _id: false, timestamps: false },
+);
+
+usedVoucherSchema.index({ voucherCode: 1, userId: 1 }, { unique: true });
 
 export default mongoose.model('UsedVoucher', usedVoucherSchema);

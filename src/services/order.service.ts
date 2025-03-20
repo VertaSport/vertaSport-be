@@ -1,6 +1,6 @@
 import Order from '@/models/Order';
 import { NextFunction, Request, Response } from 'express';
-import { inventoryService } from '.';
+import { inventoryService, voucherService } from '.';
 import { sendMail } from '@/utils/sendMail';
 import Cart from '@/models/Cart';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
@@ -12,6 +12,8 @@ import _ from 'lodash';
 import { ORDER_STATUS, PAYMENT_METHOD } from '@/constant/order';
 import { ROLE } from '@/constant/allowedRoles';
 import User from '@/models/User';
+import Voucher from '@/models/Voucher';
+import UsedVoucher from '@/models/UsedVoucher';
 
 // @ GET ALL ORDER
 export const getAllOrders = async (req, res, next) => {
@@ -66,13 +68,32 @@ export const getAllOrdersByUser = async (req: Request, res: Response, next: Next
     );
 };
 // @ CREATE ORDER
-
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     const orderCode = Number(String(Date.now()).slice(-6));
+    const userId = req.userId;
+    const voucherCode = req.body.voucherCode;
+    let shippingFee = 0;
+    if (req.body.shippingFee) {
+        shippingFee = req.body.shippingFee;
+    }
+    const totalPriceNoShip = req.body.totalPrice - shippingFee;
+    let voucherName = '';
+    let voucherDiscount = 0;
+
+    // Check voucher
+    if (voucherCode) {
+        const data = await voucherService.checkVoucherIsValid(voucherCode, userId, totalPriceNoShip);
+        voucherName = data.voucherName;
+        voucherDiscount = data.voucherDiscount;
+    }
     const order = new Order({
         ...req.body,
         userId: req.userId,
         orderCode,
+        voucherName,
+        voucherDiscount,
+        shippingFee,
+        voucherCode,
     });
     await order.save();
     const template = {
@@ -176,7 +197,9 @@ export const cancelOrder = async (req, res, next) => {
 
         // Update stock
         await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
+        await voucherService.rollbackVoucher(foundedOrder.voucherCode, foundedOrder.userId.toString());
 
+        // Send mail
         const template = {
             content: {
                 title: `${req.role === ROLE.ADMIN ? 'Đơn hàng của bạn đã bị hủy bởi admin' : 'Đơn hàng của bạn đã bị hủy'}`,

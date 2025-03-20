@@ -16,7 +16,7 @@ const voucherSchema = new Schema(
             type: Number,
             required: true,
         },
-        discountValue: {
+        voucherDiscount: {
             type: Number,
             required: true,
         },
@@ -48,5 +48,5 @@ const voucherSchema = new Schema(
         versionKey: false,
     },
 );
-
+voucherSchema.index({ code: 1 });
 export default mongoose.model('Voucher', voucherSchema);

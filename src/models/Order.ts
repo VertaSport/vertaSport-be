@@ -103,6 +103,10 @@ const orderSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        voucherCode: {
+            type: String,
+            default: null,
+        },
         orderCode: {
             type: Number,
             required: true,

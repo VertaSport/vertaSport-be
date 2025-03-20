@@ -19,11 +19,11 @@ function generateVoucherCode(length = 8) {
 }
 
 export const createVoucher = asyncHandler(async (req: Request, res: Response) => {
-    const { startDate, endDate, name, discountValue, minimumOrderPrice, status, maxUsage, usagePerUser } = req.body;
+    const { startDate, endDate, name, voucherDiscount, minimumOrderPrice, status, maxUsage, usagePerUser } = req.body;
     const currentDate = new Date();
 
     const existingVoucher = await Voucher.findOne({
-        discountValue,
+        voucherDiscount,
         minimumOrderPrice,
     });
     const existingVoucherByName = await Voucher.findOne({ name });
@@ -37,7 +37,7 @@ export const createVoucher = asyncHandler(async (req: Request, res: Response) =>
         throw new BadRequestError('Số lần sử dụng tối đa phải lớn hơn 0');
     }
 
-    if (minimumOrderPrice <= discountValue) {
+    if (minimumOrderPrice <= voucherDiscount) {
         throw new BadRequestError('Giá trị đơn hàng tối thiểu phải lớn hơn giá trị giảm giá');
     }
 
@@ -58,7 +58,7 @@ export const createVoucher = asyncHandler(async (req: Request, res: Response) =>
         startDate,
         endDate,
         name,
-        discountValue,
+        voucherDiscount,
         minimumOrderPrice,
         status,
         isOnlyForNewUser,
@@ -82,7 +82,7 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
         startDate,
         endDate,
         name,
-        discountValue,
+        voucherDiscount,
         minimumOrderPrice,
         status,
         maxUsage,
@@ -108,7 +108,7 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
         throw new BadRequestError('Số lần sử dụng tối đa phải lớn hơn 0');
     }
 
-    if (minimumOrderPrice <= discountValue) {
+    if (minimumOrderPrice <= voucherDiscount) {
         throw new BadRequestError('Giá trị đơn hàng tối thiểu phải lớn hơn giá trị giảm giá');
     }
 
@@ -121,8 +121,7 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
     }
 
     existingVoucher.name = name;
-    existingVoucher.discountValue = discountValue;
-    existingVoucher.code = generateVoucherCode();
+    existingVoucher.voucherDiscount = voucherDiscount;
     existingVoucher.usagePerUser = usagePerUser;
     existingVoucher.isOnlyForNewUser = isOnlyForNewUser;
     existingVoucher.startDate = startDate;
@@ -130,6 +129,10 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
     existingVoucher.maxUsage = maxUsage;
     existingVoucher.minimumOrderPrice = minimumOrderPrice;
     existingVoucher.status = status;
+
+    if (req.body.resetCode) {
+        existingVoucher.code = generateVoucherCode();
+    }
 
     await existingVoucher.save();
 
@@ -195,8 +198,8 @@ export const getAllVoucher = asyncHandler(async (req: Request, res: Response) =>
 
     const voucherRes = await Promise.all(
         ListVouchers.map(async (voucher) => {
-            const voucherUsedByUser = await UsedVoucher.countDocuments({ userId, voucherId: voucher._id });
-            return { ...voucher, usedCount: voucherUsedByUser };
+            const voucherUsedByUser = await UsedVoucher.findOne({ userId, voucherCode: voucher.code });
+            return { ...voucher, usedCount: voucherUsedByUser.usageCount || 0 };
         }),
     );
 

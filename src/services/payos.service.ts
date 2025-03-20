@@ -6,7 +6,7 @@ import Order from '@/models/Order';
 import PayOS from '@payos/node';
 import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
-import { inventoryService } from '.';
+import { inventoryService, voucherService } from '.';
 import config from '@/config/env.config';
 
 const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
@@ -16,13 +16,25 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const { amount, items, cancelUrl, returnUrl } = req.body;
     const orderCode = Number(String(Date.now()).slice(-6));
     const expireAt = 5 * 60; // 5 minutes
+    const voucherCode = req.body.voucherCode;
+    const userId = req.userId;
+    let voucherName = '';
+    let voucherDiscount = 0;
+    if (voucherCode) {
+        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount);
+        voucherName = voucherData.voucherName;
+        voucherDiscount = voucherData.voucherDiscount;
+    }
 
     await inventoryService.checkProductStatus(items);
 
     const order = new Order({
         ...req.body,
-        userId: req.userId,
+        userId: userId,
         orderCode,
+        voucherCode,
+        voucherName,
+        voucherDiscount,
         expiredAt: new Date(Date.now() + expireAt * 1000),
     });
 
@@ -55,6 +67,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
             },
         );
         await inventoryService.updateStockOnCancelOrder(items);
+        await voucherService.rollbackVoucher(voucherCode, userId);
     }, expireAt * 1000);
 
     const data = {
