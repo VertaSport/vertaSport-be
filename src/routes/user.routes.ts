@@ -8,5 +8,6 @@ const router = Router();
 
 router.get('/private', authenticate, userController.getProfile);
 router.patch('/change-password', authenticate, validator(changePasswoordSchema), userController.changePassword);
+router.get('/me', authenticate, userController.getProfile);
 
 export default router;
