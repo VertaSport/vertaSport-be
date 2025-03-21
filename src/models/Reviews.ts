@@ -39,6 +39,7 @@ const reviewsSchema = new mongoose.Schema(
         },
         isHided: {
             type: Boolean,
+            default: false,
         },
     },
     {
