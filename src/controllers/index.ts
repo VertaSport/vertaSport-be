@@ -11,3 +11,4 @@ export * as userController from './user.controller';
 export * as payosController from './payos.controller';
 export * as addressController from './address.controller';
 export * as reviewController from './review.controller';
+export * as statsController from './stats.controller'
