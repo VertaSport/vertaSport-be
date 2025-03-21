@@ -8,4 +8,5 @@ export * as userService from './user.service';
 export * as payosService from './payos.service';
 export * as addressService from './address.service';
 export * as reviewsService from './review.service';
+export * as statsService from './stats.service';
 export * as voucherService from './voucherChecking.service';

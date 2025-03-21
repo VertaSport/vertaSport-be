@@ -12,6 +12,7 @@ import userRouter from './user.routes';
 import payosRouter from './payos.routes';
 import addressRouter from './address.routes';
 import reviewRouter from './reviews.routes';
+import statsRouter from './stats.routes';
 import voucherRouter from '@/routes/voucher.routes';
 
 const router = Router();
@@ -29,6 +30,7 @@ router.use('/shipping', shippingRouter);
 router.use('/payos', payosRouter);
 router.use('/address', addressRouter);
 router.use('/review', reviewRouter);
+router.use('/stats', statsRouter);
 router.use('/voucher', voucherRouter);
 
 export default router;
