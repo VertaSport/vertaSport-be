@@ -55,7 +55,7 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
 
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
-    const { name, email, avatar, avatarRef, phone, role } = req.body;
+    const { name, email, avatar, avatarRef, phone } = req.body;
 
     if (!name || !email) {
         throw new BadRequestFormError('Lỗi form', {
@@ -66,7 +66,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 
     const updatedUser = await User.findOneAndUpdate(
         { _id: userId, isActive: true },
-        { name, email, avatar, avatarRef, phone, role },
+        { name, email, avatar, avatarRef, phone },
         { new: true, runValidators: true },
     );
 

@@ -1,6 +1,19 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const voucherSchema = new Schema(
+interface IVoucher extends Document {
+    name: string;
+    code: string;
+    maxUsage: number;
+    voucherDiscount: number;
+    status: boolean;
+    isOnlyForNewUser: boolean;
+    minimumOrderPrice: number;
+    startDate: Date;
+    endDate: Date;
+    usagePerUser: number;
+}
+
+const voucherSchema = new Schema<IVoucher>(
     {
         name: {
             type: String,
@@ -29,12 +42,15 @@ const voucherSchema = new Schema(
             default: false,
         },
         minimumOrderPrice: {
+            required: true,
             type: Number,
         },
         startDate: {
             type: Date,
+            required: true,
         },
         endDate: {
+            required: true,
             type: Date,
         },
         usagePerUser: {
@@ -48,5 +64,7 @@ const voucherSchema = new Schema(
         versionKey: false,
     },
 );
+
 voucherSchema.index({ code: 1 });
-export default mongoose.model('Voucher', voucherSchema);
+
+export default mongoose.model<IVoucher>('Voucher', voucherSchema);
