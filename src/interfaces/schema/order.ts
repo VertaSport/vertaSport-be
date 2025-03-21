@@ -53,4 +53,7 @@ export interface OrderSchema extends mongoose.Document {
     expiredAt: string;
     orderPaymentStatus: string;
     statusLogs: StatusLog[];
+    voucherCode: string;
+    voucherDiscount: number;
+    voucherName: string;
 }

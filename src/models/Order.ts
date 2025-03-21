@@ -47,6 +47,18 @@ const orderSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         orderCode: { type: String, required: true, unique: true },
         paymentLinkId: { type: String },
+        voucherDiscount: {
+            type: Number,
+            default: 0,
+        },
+        voucherName: {
+            type: String,
+            default: null,
+        },
+        voucherCode: {
+            type: String,
+            default: null,
+        },
         items: [OrderItemSchema],
         totalPrice: { type: Number, required: true },
         shippingFee: { type: Number, default: 0 },

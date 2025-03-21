@@ -19,7 +19,7 @@ export const handleInsertData = async (req: Request, res: Response) => {
         await SubCategory.deleteMany({});
         await Size.deleteMany({});
         await Color.deleteMany({});
-        await User.deleteMany({});
+        // await User.deleteMany({});
         await Cart.deleteMany({});
         await Variant.deleteMany({});
 

@@ -1,11 +1,7 @@
 import { BadRequestError, NotAcceptableError, NotFoundError } from '@/error/customError';
-import customResponse from '@/helpers/response';
 import { ItemOrder } from '@/interfaces/schema/order';
-import Order from '@/models/Order';
 import Product from '@/models/Product';
 import Variant from '@/models/Variant';
-import { NextFunction, Request, Response } from 'express';
-import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 
 export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
     return Promise.all(
@@ -87,7 +83,7 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
     if (isHidedProduct) {
         throw new NotAcceptableError('Sản phẩm đã không tồn tại');
     }
-    
+
     if (isDeletedProduct) {
         throw new NotAcceptableError('Sản phẩm đã không tồn tại');
     }

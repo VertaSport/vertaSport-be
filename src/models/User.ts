@@ -43,6 +43,10 @@ const UserSchema = new mongoose.Schema(
             default: ROLE.USER,
             enum: [ROLE.USER, ROLE.ADMIN],
         },
+        userIsOldWhen: {
+            type: Date,
+            default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
+        },
     },
     {
         timestamps: true,

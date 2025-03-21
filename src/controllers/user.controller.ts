@@ -13,3 +13,8 @@ export const getProfile = asyncHandler(async (req: Request, res: Response, next:
 export const changePassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     return await userService.changePassword(req, res, next);
 });
+
+// @ UPDATE USER /update
+export const updateUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    return await userService.updateUser(req, res, next);
+});
