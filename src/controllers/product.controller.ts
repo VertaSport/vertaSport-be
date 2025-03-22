@@ -213,12 +213,12 @@ export const get10Newest = asyncHandler(async (req: Request, res: Response, next
 export const getProductDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
 
+    // try {
     const product = await productService.getProductDetails(id);
     const [category, subCategory] = await Promise.all([
         Category.findById(product.categories[0]).select('name _id'),
         Category.findById(product.categories[1]).select('name _id'),
     ]);
-
 
     const result = { ...product, categories: [category, subCategory].filter((el) => el !== null) };
     return res.status(StatusCodes.OK).json(
@@ -229,12 +229,18 @@ export const getProductDetails = asyncHandler(async (req: Request, res: Response
             message: ReasonPhrases.OK,
         }),
     );
+    // } catch (error) {
+    //     await Product.deleteOne({ _id: id });
+    //     throw new BadRequestError('Product not found');
+    // }
 });
 // Get product related
 export const getProductRelated = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.categoryId;
     const product = await productService.getAllProducts({
         categories: id,
+        isDeleted: false,
+        isHide: false,
         limit: '10',
         fields: '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide',
     });
