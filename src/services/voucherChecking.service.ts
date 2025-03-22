@@ -82,7 +82,7 @@ export const checkVoucherIsValid = async (
 
     let actualDiscount = voucherData.voucherDiscount;
     if (voucherData.discountType === DiscountType.Percentage) {
-        const calculatedDiscount = totalPriceNoShip * (voucherData.voucherDiscount / 100);
+        const calculatedDiscount = Math.round(totalPriceNoShip * (voucherData.voucherDiscount / 100));
 
         if (voucherData.maxDiscountAmount > 0 && calculatedDiscount > voucherData.maxDiscountAmount) {
             actualDiscount = voucherData.maxDiscountAmount;

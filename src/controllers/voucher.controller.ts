@@ -302,7 +302,21 @@ export const getVoucherForNewUser = asyncHandler(async (req: Request, res: Respo
     const processedVouchers = await Promise.all(
         ListVouchers.map(async (voucher) => {
             const voucherUsedByUser = await UsedVoucher.findOne({ userId, voucherCode: voucher.code });
-            return { ...voucher, usedCount: voucherUsedByUser?.usageCount || 0 };
+
+            // Get total usage count across all users
+            const voucherUsageAggregate = await UsedVoucher.aggregate([
+                { $match: { voucherCode: voucher.code } },
+                { $group: { _id: null, totalUsage: { $sum: '$usageCount' } } },
+            ]);
+
+            const totalUsageCount = voucherUsageAggregate[0]?.totalUsage || 0;
+            const remainingQuantity = voucher.maxUsage - totalUsageCount;
+
+            return {
+                ...voucher,
+                usedCount: voucherUsedByUser?.usageCount || 0,
+                remainingQuantity,
+            };
         }),
     );
 
@@ -319,12 +333,30 @@ export const getVoucherForNewUser = asyncHandler(async (req: Request, res: Respo
 export const getAllVoucherForAdmin = asyncHandler(async (req: Request, res: Response) => {
     const features = new APIQuery(Voucher.find(), req.query);
     features.filter().sort().limitFields().search().paginate();
-    const [data, totalDocs] = await Promise.all([features.query, features.count()]);
+    const [vouchers, totalDocs] = await Promise.all([features.query, features.count()]);
+
+    const processedVouchers = await Promise.all(
+        vouchers.map(async (voucher) => {
+            const voucherUsageAggregate = await UsedVoucher.aggregate([
+                { $match: { voucherCode: voucher.code } },
+                { $group: { _id: null, totalUsage: { $sum: '$usageCount' } } },
+            ]);
+
+            const totalUsageCount = voucherUsageAggregate[0]?.totalUsage || 0;
+            const remainingQuantity = voucher.maxUsage - totalUsageCount;
+
+            const voucherObj = voucher.toObject();
+            return {
+                ...voucherObj,
+                remainingQuantity,
+            };
+        }),
+    );
 
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: {
-                vouchers: data,
+                vouchers: processedVouchers,
                 totalDocs,
             },
             message: 'Danh sách tất cả voucher',
