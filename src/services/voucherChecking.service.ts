@@ -2,12 +2,13 @@
 import { BadRequestError } from '@/error/customError';
 import UsedVoucher from '@/models/UsedVoucher';
 import User from '@/models/User';
-import Voucher from '@/models/Voucher';
+import Voucher, { DiscountType } from '@/models/Voucher';
 
 export const checkVoucherIsValid = async (
     voucherCode: string,
     userId: string,
     totalPriceNoShip: number,
+    shippingFee: number,
 ): Promise<{
     voucherName: string;
     voucherDiscount: number;
@@ -15,6 +16,7 @@ export const checkVoucherIsValid = async (
     discountType: string;
     maxDiscountAmount: number;
     totalPrice: number;
+    isNew: boolean;
 }> => {
     const [voucherData, currentUser] = await Promise.all([
         Voucher.findOne({ code: voucherCode }).lean(),
@@ -30,6 +32,7 @@ export const checkVoucherIsValid = async (
             discountType: '',
             maxDiscountAmount: 0,
             totalPrice: totalPriceNoShip,
+            isNew: false,
         };
     }
 
@@ -78,8 +81,8 @@ export const checkVoucherIsValid = async (
     }
 
     let actualDiscount = voucherData.voucherDiscount;
-    if (voucherData.discountType === 'percentage') {
-        const calculatedDiscount = (totalPriceNoShip * voucherData.voucherDiscount) / 100;
+    if (voucherData.discountType === DiscountType.Percentage) {
+        const calculatedDiscount = totalPriceNoShip * (voucherData.voucherDiscount / 100);
 
         if (voucherData.maxDiscountAmount > 0 && calculatedDiscount > voucherData.maxDiscountAmount) {
             actualDiscount = voucherData.maxDiscountAmount;
@@ -94,7 +97,8 @@ export const checkVoucherIsValid = async (
         code: voucherCode,
         discountType: voucherData.discountType,
         maxDiscountAmount: voucherData.maxDiscountAmount || 0,
-        totalPrice: totalPriceNoShip - actualDiscount,
+        totalPrice: totalPriceNoShip - actualDiscount + shippingFee,
+        isNew: voucherData.isOnlyForNewUser,
     };
 };
 

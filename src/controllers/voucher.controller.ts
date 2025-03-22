@@ -241,6 +241,7 @@ export const getAllVoucher = asyncHandler(async (req: Request, res: Response) =>
 
     const ListVouchers = await Voucher.find({
         status: true,
+        isOnlyForNewUser: false,
         startDate: { $lte: currentDate },
         endDate: { $gte: currentDate },
         maxUsage: { $gt: 0 },
@@ -249,20 +250,31 @@ export const getAllVoucher = asyncHandler(async (req: Request, res: Response) =>
     const processedVouchers = await Promise.all(
         ListVouchers.map(async (voucher) => {
             const voucherUsedByUser = await UsedVoucher.findOne({ userId, voucherCode: voucher.code });
-            return { ...voucher, usedCount: voucherUsedByUser?.usageCount || 0 };
+
+            // Get total usage count across all users
+            const voucherUsageAggregate = await UsedVoucher.aggregate([
+                { $match: { voucherCode: voucher.code } },
+                { $group: { _id: null, totalUsage: { $sum: '$usageCount' } } },
+            ]);
+
+            const totalUsageCount = voucherUsageAggregate[0]?.totalUsage || 0;
+            const remainingQuantity = voucher.maxUsage - totalUsageCount;
+
+            return {
+                ...voucher,
+                usedCount: voucherUsedByUser?.usageCount || 0,
+                remainingQuantity,
+            };
         }),
     );
 
-    // Split vouchers by discount type
-    const percentageVouchers = processedVouchers.filter((voucher) => voucher.discountType === DiscountType.Percentage);
-    const fixedVouchers = processedVouchers.filter((voucher) => voucher.discountType === DiscountType.Fixed);
+    // // Split vouchers by discount type
+    // const percentageVouchers = processedVouchers.filter((voucher) => voucher.discountType === DiscountType.Percentage);
+    // const fixedVouchers = processedVouchers.filter((voucher) => voucher.discountType === DiscountType.Fixed);
 
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: {
-                percentageVouchers,
-                fixedVouchers,
-            },
+            data: processedVouchers,
             message: 'Danh sách voucher cho người dùng',
             status: StatusCodes.OK,
             success: true,
@@ -287,9 +299,16 @@ export const getVoucherForNewUser = asyncHandler(async (req: Request, res: Respo
         maxUsage: { $gt: 0 },
     }).lean();
 
+    const processedVouchers = await Promise.all(
+        ListVouchers.map(async (voucher) => {
+            const voucherUsedByUser = await UsedVoucher.findOne({ userId, voucherCode: voucher.code });
+            return { ...voucher, usedCount: voucherUsedByUser?.usageCount || 0 };
+        }),
+    );
+
     return res.status(StatusCodes.OK).json(
         customResponse({
-            data: ListVouchers,
+            data: processedVouchers,
             message: 'Danh sách voucher cho người dùng mới',
             status: StatusCodes.OK,
             success: true,

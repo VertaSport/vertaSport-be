@@ -72,7 +72,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     const orderCode = Number(String(Date.now()).slice(-6));
     const userId = req.userId;
     const voucherCode = req.body.voucherCode;
+    let totalPrice = req.body.totalPrice;
     let shippingFee = 0;
+    let isVoucherForNewUser = false;
     if (req.body.shippingFee) {
         shippingFee = req.body.shippingFee;
     }
@@ -86,9 +88,11 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 
     // Check voucher
     if (voucherCode) {
-        const data = await voucherService.checkVoucherIsValid(voucherCode, userId, totalPriceNoShip);
+        const data = await voucherService.checkVoucherIsValid(voucherCode, userId, totalPriceNoShip, shippingFee);
         voucherName = data.voucherName;
         voucherDiscount = data.voucherDiscount;
+        totalPrice = data.totalPrice;
+        isVoucherForNewUser = data.isNew;
     }
     const order = new Order({
         ...req.body,
@@ -98,6 +102,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         voucherDiscount,
         shippingFee,
         voucherCode,
+        totalPrice,
     });
     await order.save();
     const template = {
@@ -126,7 +131,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     // Update stock
     await inventoryService.updateStockOnCreateOrder(req.body.items);
     const now = new Date();
-    if (currentUser.userIsOldWhen > now) {
+    if (currentUser.userIsOldWhen > now && isVoucherForNewUser) {
         await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
     }
     await sendMail({ email: req.body.customerInfo.email, template, type: 'UpdateStatusOrder' });

@@ -25,7 +25,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
-        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount);
+        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount, shippingFee);
         voucherName = voucherData.voucherName;
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
@@ -45,6 +45,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         voucherName,
         voucherDiscount,
         expiredAt: new Date(Date.now() + expireAt * 1000),
+        totalPrice,
     });
 
     const saveOrder = await order.save();
