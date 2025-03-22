@@ -173,11 +173,11 @@ export const cancelOrder = async (req, res, next) => {
           : 'Khách hàng';
 
     if (!foundedOrder) {
-        throw new BadRequestError(`Not found order with id ${req.body.orderId}`);
+        throw new BadRequestError(`Không tìm thấy đơn hàng với ID: ${req.body.orderId}`);
     }
 
     if (foundedOrder.orderStatus === ORDER_STATUS.CANCELLED) {
-        throw new NotAcceptableError(`You cannot cancel this order because it was cancelled before. `);
+        throw new NotAcceptableError(`Không thể hủy vì đơn hàng đã bị hủy từ trước!`);
     }
 
     if (foundedOrder.orderStatus !== ORDER_STATUS.DELIVERED && foundedOrder.orderStatus !== ORDER_STATUS.DONE) {
@@ -211,7 +211,7 @@ export const cancelOrder = async (req, res, next) => {
         const template = {
             content: {
                 title: `${req.role === ROLE.ADMIN ? 'Đơn hàng của bạn đã bị hủy bởi admin' : 'Đơn hàng của bạn đã bị hủy'}`,
-                description: `${req.role === ROLE.ADMIN ? `Đơn hàng của bạn đã bị hủy bởi admin với lý do ${foundedOrder.description}, ${foundedOrder.isPaid ? `Rất xin lỗi vì sự bất tiện này hãy liên hệ ngay với chúng tôi qua số điện thoại +84 123 456 789 để cửa hàng hoàn lại ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(foundedOrder.totalPrice || 0)} cho bạn ` : ''} dưới đây là thông tin đơn hàng:` : `Bạn vừa hủy một đơn hàng với lý do ${foundedOrder.description} từ AdShop thông tin đơn hàng:`}`,
+                description: `${req.role === ROLE.ADMIN ? `Đơn hàng của bạn đã bị hủy bởi admin với lý do ${foundedOrder.description}, ${foundedOrder.isPaid ? `Rất xin lỗi vì sự bất tiện này hãy liên hệ ngay với chúng tôi qua số điện thoại +84 123 456 789 để cửa hàng hoàn lại ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(foundedOrder.totalPrice || 0)} cho bạn ` : ''} dưới đây là thông tin đơn hàng:` : `Bạn vừa hủy một đơn hàng với lý do ${foundedOrder.description} từ VertaSport thông tin đơn hàng:`}`,
                 email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
             },
             product: {
@@ -219,7 +219,7 @@ export const cancelOrder = async (req, res, next) => {
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
-            subject: '[Verta-Shop] - Đơn hàng của bạn đã bị hủy',
+            subject: '[Verta-Sport] - Đơn hàng của bạn đã bị hủy',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
@@ -293,7 +293,7 @@ export const confirmOrder = async (req, res, next) => {
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
-            subject: '[Verta-Shop] - Đơn hàng của bạn đã được xác nhận',
+            subject: '[VertaSport] - Đơn hàng của bạn đã được xác nhận',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
@@ -369,7 +369,7 @@ export const shippingOrder = async (req, res, next) => {
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
-            subject: '[Verta-Shop] - Đơn hàng của bạn đang được giao',
+            subject: '[Verta-Sport] - Đơn hàng của bạn đang được giao',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
@@ -395,7 +395,7 @@ export const shippingOrder = async (req, res, next) => {
             data: null,
             success: true,
             status: StatusCodes.OK,
-            message: 'Your order is on delivery.',
+            message: 'Đơn hàng của bạn đang được giao.',
         }),
     );
 };
@@ -437,14 +437,14 @@ export const deliverOrder = async (req, res, next) => {
                 title: `Đơn hàng của bạn đã được giao thành công`,
                 description: `Đơn hàng của bạn đã được xác nhận là giao thành công bởi người vận chuyển. Dưới đây là thông tin đơn hàng của bạn`,
                 email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                warning: `Nếu bạn chưa nhận được hàng vui lòng liên hệ tới email của shop: adshop5785@gmail.com. Nếu đã nhận được hàng bạn vui lòng lên xác nhận lại tại trang đơn hàng của bạn. Trong trường hợp bạn đã nhận được hàng dựa theo chính sách chúng tôi sẽ cập nhật đơn hàng sang trạng thái hoàn thành sau 3 ngày!`,
+                warning: `Nếu bạn chưa nhận được hàng vui lòng liên hệ tới email của Sport: vertarstport@gmail.com. Nếu đã nhận được hàng bạn vui lòng lên xác nhận lại tại trang đơn hàng của bạn. Trong trường hợp bạn đã nhận được hàng dựa theo chính sách chúng tôi sẽ cập nhật đơn hàng sang trạng thái hoàn thành sau 3 ngày!`,
             },
             product: {
                 items: foundedOrder.items,
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
-            subject: '[Verta-Shop] - Đơn hàng của bạn đã được giao thành công',
+            subject: '[Verta-Sport] - Đơn hàng của bạn đã được giao thành công',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
@@ -506,7 +506,7 @@ export const finishOrder = async (req, res, next) => {
         const template = {
             content: {
                 title: `Đơn hàng của bạn đã hoàn tất`,
-                description: `Cảm ơn bạn đã tin tưởng và lựa chọn AdShop cho nhu cầu mua sắm của mình.Nếu bạn cần hỗ trợ hoặc có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi`,
+                description: `Cảm ơn bạn đã tin tưởng và lựa chọn VertaSport cho nhu cầu mua sắm của mình.Nếu bạn cần hỗ trợ hoặc có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi`,
                 email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
             },
             product: {
@@ -514,7 +514,7 @@ export const finishOrder = async (req, res, next) => {
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
-            subject: '[Verta-Shop] - Đơn hàng của bạn đã hoàn thành',
+            subject: '[Verta-Sport] - Đơn hàng của bạn đã hoàn thành',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
@@ -540,7 +540,7 @@ export const finishOrder = async (req, res, next) => {
             data: null,
             success: true,
             status: StatusCodes.OK,
-            message: 'Your order is done.',
+            message: 'Đơn hàng của bạn đã hoàn tất.',
         }),
     );
 };

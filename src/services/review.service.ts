@@ -112,6 +112,7 @@ export const useGetAllReviewStar = async (req: Request, res: Response, next: Nex
 
     const reviewsStar = await Reviews.find({
         productId: productId,
+        isHided: false,
     })
         .select('rating')
         .lean();
