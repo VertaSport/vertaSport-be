@@ -82,14 +82,15 @@ export const checkVoucherIsValid = async (
 
     let actualDiscount = voucherData.voucherDiscount;
     if (voucherData.discountType === DiscountType.Percentage) {
-        const calculatedDiscount = Math.round(totalPriceNoShip * (voucherData.voucherDiscount / 100));
+        const calculatedDiscount = Math.min(totalPriceNoShip * (voucherData.voucherDiscount / 100));
 
         if (voucherData.maxDiscountAmount > 0 && calculatedDiscount > voucherData.maxDiscountAmount) {
             actualDiscount = voucherData.maxDiscountAmount;
+        } else {
+            actualDiscount = calculatedDiscount;
         }
-
-        actualDiscount = calculatedDiscount;
     }
+    const totalPrice = totalPriceNoShip - actualDiscount + shippingFee;
 
     return {
         voucherName: voucherData.name,
@@ -97,7 +98,7 @@ export const checkVoucherIsValid = async (
         code: voucherCode,
         discountType: voucherData.discountType,
         maxDiscountAmount: voucherData.maxDiscountAmount || 0,
-        totalPrice: totalPriceNoShip - actualDiscount + shippingFee,
+        totalPrice,
         isNew: voucherData.isOnlyForNewUser,
     };
 };
