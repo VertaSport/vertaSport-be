@@ -105,7 +105,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         shippingFee,
         voucherCode,
         totalPrice,
-        discountType
+        discountType,
     });
     await order.save();
     const template = {
@@ -117,9 +117,14 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         product: {
             items: req.body.items,
             shippingfee: req.body.shippingFee,
-            totalPrice: req.body.totalPrice,
+            totalPrice: order.totalPrice,
         },
         subject: '[VERTAR SPORT] - Đơn hàng mới của bạn',
+        voucher: {
+            name: order.voucherName,
+            discount: order.voucherDiscount,
+            code: order.voucherCode,
+        },
         link: {
             linkHerf: `http://localhost:3000/my-orders/${order._id}`,
             linkName: `Kiểm tra đơn hàng`,
@@ -232,11 +237,16 @@ export const cancelOrder = async (req, res, next) => {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
+            voucher: {
+                name: foundedOrder.voucherName,
+                discount: foundedOrder.voucherDiscount,
+                code: foundedOrder.voucherCode,
+            },
             user: {
-                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
-                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
-                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+                name: foundedOrder.customerInfo.name,
+                phone: foundedOrder.customerInfo.phone,
+                email: foundedOrder.customerInfo.email,
+                address: `[${foundedOrder.shippingAddress.address}] - ${` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
             },
         };
         await sendMail({
@@ -306,11 +316,16 @@ export const confirmOrder = async (req, res, next) => {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
+            voucher: {
+                name: foundedOrder.voucherName,
+                discount: foundedOrder.voucherDiscount,
+                code: foundedOrder.voucherCode,
+            },
             user: {
-                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
-                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
-                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+                name: foundedOrder.customerInfo.name,
+                phone: foundedOrder.customerInfo.phone,
+                email: foundedOrder.customerInfo.email,
+                address: `[${foundedOrder.shippingAddress.address}] - ${` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
             },
         };
         await sendMail({
@@ -382,11 +397,16 @@ export const shippingOrder = async (req, res, next) => {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
+            voucher: {
+                name: foundedOrder.voucherName,
+                discount: foundedOrder.voucherDiscount,
+                code: foundedOrder.voucherCode,
+            },
             user: {
-                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
-                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
-                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+                name: foundedOrder.customerInfo.name,
+                phone: foundedOrder.customerInfo.phone,
+                email: foundedOrder.customerInfo.email,
+                address: `[${foundedOrder.shippingAddress.address}] - ${` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
             },
         };
         await sendMail({
@@ -452,16 +472,21 @@ export const deliverOrder = async (req, res, next) => {
                 shippingfee: foundedOrder.shippingFee,
                 totalPrice: foundedOrder.totalPrice,
             },
+            voucher: {
+                name: foundedOrder.voucherName,
+                discount: foundedOrder.voucherDiscount,
+                code: foundedOrder.voucherCode,
+            },
             subject: '[Verta-Sport] - Đơn hàng của bạn đã được giao thành công',
             link: {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             user: {
-                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
-                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
-                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+                name: foundedOrder.customerInfo.name,
+                phone: foundedOrder.customerInfo.phone,
+                email: foundedOrder.customerInfo.email,
+                address: `[${foundedOrder.shippingAddress.address}] - ${` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
             },
         };
         await sendMail({
@@ -527,11 +552,16 @@ export const finishOrder = async (req, res, next) => {
                 linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
+            voucher: {
+                name: foundedOrder.voucherName,
+                discount: foundedOrder.voucherDiscount,
+                code: foundedOrder.voucherCode,
+            },
             user: {
-                name: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.name : '',
-                phone: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.phone : '',
-                email: foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? foundedOrder.customerInfo.email : '',
-                address: `[${foundedOrder.shippingAddress.address}] -${foundedOrder.paymentMethod === PAYMENT_METHOD.CARD ? '' : ` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
+                name: foundedOrder.customerInfo.name,
+                phone: foundedOrder.customerInfo.phone,
+                email: foundedOrder.customerInfo.email,
+                address: `[${foundedOrder.shippingAddress.address}] - ${` ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district},`} ${foundedOrder.shippingAddress.province}, ${foundedOrder.shippingAddress.country}`,
             },
         };
         await sendMail({

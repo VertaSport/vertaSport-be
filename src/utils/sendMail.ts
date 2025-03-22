@@ -1,13 +1,18 @@
 import config from '@/config/env.config';
 import { templateMail } from '@/template/Mailtemplate';
 import nodemailer from 'nodemailer';
-type template = {
+export type template = {
     subject: string;
     content: {
         title?: string;
         description: string;
         warning?: string;
         email: string;
+    };
+    voucher?: {
+        name: string;
+        code: string;
+        discount: number;
     };
     link: {
         linkName: string;

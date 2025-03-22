@@ -6,6 +6,11 @@ export type Content = {
         warning?: string;
         email: string;
     };
+    voucher?: {
+        name: string;
+        code: string;
+        discount: number;
+    };
     product?: {
         items: {
             productId?: string;
@@ -220,6 +225,15 @@ export const templateMail = (template: Template, mailContent: Content) => {
                         ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(mailContent.product?.shippingfee || 0)}
                     </span>
                 </p>
+                ${
+                    mailContent.voucher &&
+                    `<p style="margin: 0; color: #34495e; font-size: 14px;">
+                    <strong>Mã giảm giá ${mailContent.voucher?.code}:</strong>
+                    <span style="color: #2980b9; font-weight: bold;">
+                        ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(mailContent.voucher?.discount || 0)}
+                    </span>
+                </p>`
+                }
                 <p style="margin: 5px 0 0; color: #34495e; font-size: 16px;">
                     <strong>Tổng Tiền:</strong>
                     <span style="color: #e74c3c; font-weight: bold; font-size: 18px;">
