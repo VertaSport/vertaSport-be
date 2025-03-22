@@ -75,6 +75,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     let totalPrice = req.body.totalPrice;
     let shippingFee = 0;
     let isVoucherForNewUser = false;
+    let discountType = '';
     if (req.body.shippingFee) {
         shippingFee = req.body.shippingFee;
     }
@@ -93,6 +94,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         voucherDiscount = data.voucherDiscount;
         totalPrice = data.totalPrice;
         isVoucherForNewUser = data.isNew;
+        discountType = data.discountType;
     }
     const order = new Order({
         ...req.body,
@@ -103,6 +105,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
         shippingFee,
         voucherCode,
         totalPrice,
+        discountType
     });
     await order.save();
     const template = {

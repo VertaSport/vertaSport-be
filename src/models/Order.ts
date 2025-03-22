@@ -3,6 +3,7 @@ import { ORDER_PAYMENT_STATUS, ORDER_STATUS, PAYMENT_METHOD } from '@/constant/o
 import { OrderSchema } from '@/interfaces/schema/order';
 import mongoose, { ObjectId } from 'mongoose';
 import dayjs from 'dayjs';
+import { DiscountType } from '@/models/Voucher';
 
 const OrderItemSchema = new mongoose.Schema(
     {
@@ -50,6 +51,12 @@ const orderSchema = new mongoose.Schema(
         voucherDiscount: {
             type: Number,
             default: 0,
+        },
+        discountType: {
+            type: String,
+            enum: Object.values(DiscountType),
+            required: true,
+            default: null,
         },
         voucherName: {
             type: String,

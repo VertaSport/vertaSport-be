@@ -22,6 +22,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const shippingFee = req.body.shippingFee || 0;
     const totalPriceNoShip = req.body.totalPrice - shippingFee;
     let totalPrice = totalPriceNoShip;
+    let discountType = '';
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
@@ -29,6 +30,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         voucherName = voucherData.voucherName;
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
+        discountType = voucherData.discountType;
     }
 
     const currentUser = await User.findById(userId);
@@ -46,6 +48,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         voucherDiscount,
         expiredAt: new Date(Date.now() + expireAt * 1000),
         totalPrice,
+        discountType,
     });
 
     const saveOrder = await order.save();

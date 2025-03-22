@@ -33,7 +33,7 @@ export const createVoucher = asyncHandler(async (req: Request, res: Response) =>
     } = req.body;
     const currentDate = new Date();
 
-    const existingVoucherByName = await Voucher.findOne({ name });
+    const existingVoucherByName = await Voucher.findOne({ name, isOnlyForNewUser });
 
     if (existingVoucherByName) {
         throw new BadRequestError('Tên voucher đã tồn tại');
@@ -127,7 +127,7 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
         throw new BadRequestError('Voucher không tồn tại');
     }
 
-    const existingVoucherByName = await Voucher.findOne({ name, _id: { $ne: id } });
+    const existingVoucherByName = await Voucher.findOne({ name, _id: { $ne: id }, isOnlyForNewUser });
     if (existingVoucherByName) {
         throw new BadRequestError('Tên voucher đã tồn tại');
     }
