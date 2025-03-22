@@ -8,15 +8,31 @@ export const checkVoucherIsValid = async (
     voucherCode: string,
     userId: string,
     totalPriceNoShip: number,
-): Promise<{ voucherName: string; voucherDiscount: number; code: string }> => {
+): Promise<{
+    voucherName: string;
+    voucherDiscount: number;
+    code: string;
+    discountType: string;
+    maxDiscountAmount: number;
+    totalPrice: number;
+}> => {
     const [voucherData, currentUser] = await Promise.all([
         Voucher.findOne({ code: voucherCode }).lean(),
         User.findById(userId).lean(),
     ]);
     const isNewUser = currentUser?.userIsOldWhen > new Date();
-    if (!!voucherCode) {
-        return { voucherName: '', voucherDiscount: 0, code: '' };
+
+    if (!voucherCode) {
+        return {
+            voucherName: '',
+            voucherDiscount: 0,
+            code: '',
+            discountType: '',
+            maxDiscountAmount: 0,
+            totalPrice: totalPriceNoShip,
+        };
     }
+
     if (!voucherData) {
         throw new BadRequestError(`Voucher đã hết hạn quý khách vui lòng chọn voucher khác`);
     }
@@ -62,7 +78,25 @@ export const checkVoucherIsValid = async (
         { upsert: true, new: true },
     );
 
-    return { voucherName: voucherData.name, voucherDiscount: voucherData.voucherDiscount, code: voucherCode };
+    let actualDiscount = voucherData.voucherDiscount;
+    if (voucherData.discountType === 'percentage') {
+        const calculatedDiscount = (totalPriceNoShip * voucherData.voucherDiscount) / 100;
+
+        if (voucherData.maxDiscountAmount > 0 && calculatedDiscount > voucherData.maxDiscountAmount) {
+            throw new BadRequestError(`Số tiền giảm giá vượt quá mức tối đa cho phép của voucher ${voucherCode}`);
+        }
+
+        actualDiscount = calculatedDiscount;
+    }
+
+    return {
+        voucherName: voucherData.name,
+        voucherDiscount: actualDiscount,
+        code: voucherCode,
+        discountType: voucherData.discountType,
+        maxDiscountAmount: voucherData.maxDiscountAmount || 0,
+        totalPrice: totalPriceNoShip - actualDiscount,
+    };
 };
 
 export const rollbackVoucher = async (voucherCode: string, userId: string) => {

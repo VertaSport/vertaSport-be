@@ -11,6 +11,12 @@ interface IVoucher extends Document {
     startDate: Date;
     endDate: Date;
     usagePerUser: number;
+    discountType: string;
+    maxDiscountAmount: number;
+}
+export enum DiscountType {
+    Percentage = 'percentage',
+    Fixed = 'fixed',
 }
 
 const voucherSchema = new Schema<IVoucher>(
@@ -29,9 +35,20 @@ const voucherSchema = new Schema<IVoucher>(
             type: Number,
             required: true,
         },
+        discountType: {
+            type: String,
+            enum: Object.values(DiscountType),
+            required: true,
+            default: 'percentage',
+        },
         voucherDiscount: {
             type: Number,
             required: true,
+        },
+        maxDiscountAmount: {
+            type: Number,
+            default: 0,
+            description: 'Maximum discount amount applicable',
         },
         status: {
             type: Boolean,
