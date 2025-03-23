@@ -69,7 +69,7 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response, ne
     const id = req.params.id;
     await Cart.updateMany({ 'items.product': id }, { $pull: { items: { product: id } } });
     await productService.deleteProduct(id);
-    await Order.updateMany({ 'items.productId': id }, { $set: { isDeleteForUser: true } });
+
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: null,

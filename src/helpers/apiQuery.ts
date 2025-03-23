@@ -37,11 +37,12 @@ class APIQuery<T extends Document> {
             }
         });
         Object.keys(queryObj).forEach((el) => {
-            if (String(queryObj[el]).includes(',')) {
-                queryObj[el] = { $in: String(queryObj[el]).split(',') };
-            }
+            // if (String(queryObj[el]).includes(',')) {
+            queryObj[el] = { $in: String(queryObj[el]).split(',') };
+            // }
         });
         let queryStr = JSON.stringify(queryObj);
+        console.log(queryStr);
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
         this.query = this.query.find(JSON.parse(queryStr));
