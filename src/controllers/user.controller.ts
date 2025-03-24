@@ -3,6 +3,10 @@ import { userService } from '@/services';
 import { NextFunction, Request, Response } from 'express';
 
 // @ ROOT ENDPOINT /user
+// @Get: getAllUsers
+export const getAllUsers = asyncHandler(async (req, res, next) => {
+    return await userService.getAllUsers(req, res, next);
+});
 
 // @ GET PROFILE /private
 export const getProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
