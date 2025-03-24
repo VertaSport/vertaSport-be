@@ -256,7 +256,7 @@ export const templateMail = (template: Template, mailContent: Content) => {
                 </div>
 
                 <div style="background-color: #2c3e50; color: white; padding: 20px; text-align: center;">
-                    <p>© 2024 AdStore. Đã đăng ký bản quyền</p>
+                    <p>© 2024 Verta-Store. Đã đăng ký bản quyền</p>
                     <p>Trải nghiệm mua sắm hoàn hảo</p>
                 </div>
             </div>

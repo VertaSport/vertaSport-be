@@ -2,8 +2,9 @@ import { BadRequestFormError, UnAuthenticatedError } from '@/error/customError';
 import customResponse from '@/helpers/response';
 import User from '@/models/User';
 import { NextFunction, Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import bcrypt from 'bcryptjs';
+import APIQuery from '@/helpers/apiQuery';
 
 export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
@@ -17,6 +18,31 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
             message: 'Lấy thông tin người dùng thành công',
             status: StatusCodes.OK,
             success: true,
+        }),
+    );
+};
+
+// @Get: getAllUsers
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+    const page = req.query.page ? +req.query.page : 1;
+    req.query.limit = String(req.query.limit || 10);
+
+    const features = new APIQuery(User.find({}).select('-password'), req.query);
+    features.filter().sort().limitFields().search().paginate();
+
+    const [data, totalDocs] = await Promise.all([features.query, features.count()]);
+    const totalPages = Math.ceil(Number(totalDocs) / +req.query.limit);
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: {
+                users: data,
+                page: page,
+                totalDocs: totalDocs,
+                totalPages: totalPages,
+            },
+            success: true,
+            status: StatusCodes.OK,
+            message: ReasonPhrases.OK,
         }),
     );
 };
