@@ -22,7 +22,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const shippingFee = req.body.shippingFee || 0;
     const totalPriceNoShip = req.body.totalPrice - shippingFee;
     let totalPrice = totalPriceNoShip;
-    let discountType = '';
+    let discountType = 'fixed';
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
