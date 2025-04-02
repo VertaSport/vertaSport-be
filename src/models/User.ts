@@ -47,6 +47,48 @@ const UserSchema = new mongoose.Schema(
             type: Date,
             default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
         },
+        isBanned: {
+            type: Boolean,
+            default: false,
+        },
+        bannedReason: {
+            type: String,
+            default: null,
+        },
+        bannedAt: {
+            type: Date,
+            default: null,
+        },
+        banHistory: [
+            {
+                action: {
+                    type: String,
+                    enum: ['ban', 'unban'],
+                    required: true,
+                },
+                adminId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                    required: true,
+                },
+                adminName: {
+                    type: String,
+                    required: true,
+                },
+                adminEmail: {
+                    type: String,
+                    required: true,
+                },
+                reason: {
+                    type: String,
+                    default: null,
+                },
+                timestamp: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     {
         timestamps: true,

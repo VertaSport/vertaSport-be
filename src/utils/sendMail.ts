@@ -36,7 +36,7 @@ export const sendMail = async ({
 }: {
     email: string;
     template: template;
-    type: 'Verify' | 'ResetPassword' | 'UpdateStatusOrder';
+    type: 'Verify' | 'ResetPassword' | 'UpdateStatusOrder' | 'BanAccount' | 'UnbanAccount';
 }) => {
     const info = await transporter.sendMail({
         from: 'VERTA SPORT <no-reply@vertasport.com>',
