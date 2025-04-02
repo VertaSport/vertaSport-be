@@ -5,6 +5,9 @@ import { NextFunction, Request, Response } from 'express';
 import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import bcrypt from 'bcryptjs';
 import APIQuery from '@/helpers/apiQuery';
+import mongoose from 'mongoose';
+import { Content, templateMail } from '@/template/Mailtemplate';
+import { sendMail } from '@/utils/sendMail';
 
 export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.userId;
@@ -26,11 +29,19 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     const page = req.query.page ? +req.query.page : 1;
     req.query.limit = String(req.query.limit || 10);
-    const features = new APIQuery(User.find({ role: 'user' }).select('-password'), req.query);
+
+    const features = new APIQuery(
+        User.find({ role: 'user' })
+            .select('-password')
+            .select('name email phone isActive isBanned bannedReason bannedAt createdAt updatedAt'),
+        req.query,
+    );
+
     features.filter().sort().limitFields().search().paginate();
 
     const [data, totalDocs] = await Promise.all([features.query, features.count()]);
     const totalPages = Math.ceil(Number(totalDocs) / +req.query.limit);
+
     return res.status(StatusCodes.OK).json(
         customResponse({
             data: {
@@ -103,6 +114,191 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
         customResponse({
             data: updatedUser,
             message: 'Cập nhật thông tin người dùng thành công',
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+
+// @Patch: banUser
+export const banUser = async (req: Request, res: Response, next: NextFunction) => {
+    const adminId = req.userId;
+    const { userId, reason } = req.body;
+
+    if (!userId || !reason) {
+        throw new BadRequestFormError('Lỗi form', {
+            field: 'userId or reason',
+            message: 'User ID và lý do khóa là bắt buộc',
+        });
+    }
+
+    const admin = await User.findOne({ _id: adminId, role: 'admin' });
+    if (!admin) {
+        throw new UnAuthenticatedError('Bạn không có quyền thực hiện hành động này');
+    }
+
+    const user = await User.findOne({ _id: userId, role: 'user' });
+    if (!user) {
+        throw new BadRequestFormError('Lỗi', {
+            field: 'userId',
+            message: 'Người dùng không tồn tại',
+        });
+    }
+
+    if (user.isBanned) {
+        throw new BadRequestFormError('Lỗi', {
+            field: 'userId',
+            message: 'Tài khoản này đã bị khóa trước đó',
+        });
+    }
+
+    user.isBanned = true;
+    user.bannedReason = reason;
+    user.bannedAt = new Date();
+    user.banHistory.push({
+        action: 'ban',
+        adminId: new mongoose.Types.ObjectId(adminId),
+        adminName: admin.name,
+        adminEmail: admin.email,
+        reason,
+        timestamp: new Date(),
+    });
+
+    await user.save();
+
+    const template = {
+        content: {
+            title: 'Tài Khoản Của Bạn Đã Bị Khóa',
+            description:
+                'Chúng tôi rất tiếc phải thông báo rằng tài khoản của bạn đã bị khóa do vi phạm chính sách của Verta Sport.',
+            email: user.email,
+            reason: reason,
+            bannedAt: user.bannedAt,
+        },
+        link: {
+            linkHerf: 'mailto:support@vertasport.com',
+            linkName: 'Liên Hệ Hỗ Trợ',
+        },
+        subject: '[Verta-Sport] - Tài Khoản Của Bạn Đã Bị Khóa',
+    };
+    await sendMail({
+        email: user.email,
+        template,
+        type: 'BanAccount',
+    });
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: user,
+            message: 'Khóa tài khoản người dùng thành công',
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+
+// @Patch: unbanUser
+export const unbanUser = async (req: Request, res: Response, next: NextFunction) => {
+    const adminId = req.userId;
+    const { userId } = req.body;
+
+    if (!userId) {
+        throw new BadRequestFormError('Lỗi form', {
+            field: 'userId',
+            message: 'User ID là bắt buộc',
+        });
+    }
+
+    const admin = await User.findOne({ _id: adminId, role: 'admin' });
+    if (!admin) {
+        throw new UnAuthenticatedError('Bạn không có quyền thực hiện hành động này');
+    }
+
+    const user = await User.findOne({ _id: userId, role: 'user' });
+    if (!user) {
+        throw new BadRequestFormError('Lỗi', {
+            field: 'userId',
+            message: 'Người dùng không tồn tại',
+        });
+    }
+
+    if (!user.isBanned) {
+        throw new BadRequestFormError('Lỗi', {
+            field: 'userId',
+            message: 'Tài khoản này không bị khóa',
+        });
+    }
+
+    user.isBanned = false;
+    user.bannedReason = null;
+    user.bannedAt = null;
+    user.banHistory.push({
+        action: 'unban',
+        adminId: new mongoose.Types.ObjectId(adminId),
+        adminName: admin.name,
+        adminEmail: admin.email,
+        timestamp: new Date(),
+    });
+
+    await user.save();
+
+    const template = {
+        content: {
+            title: 'Tài Khoản Của Bạn Đã Được Mở Khóa',
+            description:
+                'Chúng tôi rất vui thông báo rằng tài khoản của bạn đã được mở khóa. Bạn có thể tiếp tục sử dụng các dịch vụ của Verta Sport.',
+            email: user.email,
+        },
+        link: {
+            linkHerf: 'http://localhost:3000/login',
+            linkName: 'Đăng Nhập Ngay',
+        },
+        subject: '[Verta-Sport] - Tài Khoản Của Bạn Đã Được Mở Khóa',
+    };
+    await sendMail({
+        email: user.email,
+        template,
+        type: 'UnbanAccount',
+    });
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: user,
+            message: 'Mở khóa tài khoản người dùng thành công',
+            status: StatusCodes.OK,
+            success: true,
+        }),
+    );
+};
+// @Get: getUserBanHistory
+export const getUserBanHistory = async (req: Request, res: Response, next: NextFunction) => {
+    const adminId = req.userId;
+    const { userId } = req.query;
+
+    if (!userId) {
+        throw new BadRequestFormError('Lỗi query', {
+            field: 'userId',
+            message: 'User ID là bắt buộc',
+        });
+    }
+
+    const admin = await User.findOne({ _id: adminId, role: 'admin' });
+    if (!admin) {
+        throw new UnAuthenticatedError('Bạn không có quyền thực hiện hành động này');
+    }
+
+    const user = await User.findOne({ _id: userId, role: 'user' }).select('banHistory');
+    if (!user) {
+        throw new BadRequestFormError('Lỗi', {
+            field: 'userId',
+            message: 'Người dùng không tồn tại',
+        });
+    }
+
+    return res.status(StatusCodes.OK).json(
+        customResponse({
+            data: user.banHistory,
+            message: 'Lấy lịch sử khóa/mở khóa thành công',
             status: StatusCodes.OK,
             success: true,
         }),
