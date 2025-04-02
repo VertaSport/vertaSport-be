@@ -14,6 +14,7 @@ const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos
 let paymentTimeoutId: NodeJS.Timeout;
 
 export const createPayOsPayment = async (req: Request, res: Response, next: NextFunction) => {
+    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 900) + 100));
     const { amount, items, cancelUrl, returnUrl } = req.body;
     const orderCode = Number(String(Date.now()).slice(-6));
     const expireAt = 5 * 60; // 5 minutes

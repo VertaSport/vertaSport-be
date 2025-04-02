@@ -69,6 +69,7 @@ export const getAllOrdersByUser = async (req: Request, res: Response, next: Next
 };
 // @ CREATE ORDER
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
+    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 900) + 100));
     const orderCode = Number(String(Date.now()).slice(-6));
     const userId = req.userId;
     const voucherCode = req.body.voucherCode;
