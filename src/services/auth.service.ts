@@ -61,6 +61,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             field: 'email',
         });
     }
+
     if (!foundedUser.isActive) {
         throw new BadRequestFormError(
             'Có lỗi xảy ra',
@@ -71,6 +72,20 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             StatusCodes.UNAUTHORIZED,
         );
     }
+
+    if (foundedUser.isBanned) {
+        throw new BadRequestFormError(
+            'Có lỗi xảy ra',
+            {
+                message: `Tài khoản của bạn đã bị khóa! Lý do: ${foundedUser.bannedReason || 'Không xác định'}. Thời gian khóa: ${
+                    foundedUser.bannedAt ? new Date(foundedUser.bannedAt).toLocaleString('vi-VN') : 'Không xác định'
+                }. Vui lòng liên hệ hỗ trợ qua email: support@vertasport.com.`,
+                field: 'email',
+            },
+            StatusCodes.FORBIDDEN,
+        );
+    }
+
     const isMatchedPassword = await bcrypt.compare(req.body.password, foundedUser?.password);
     if (!isMatchedPassword) {
         throw new BadRequestFormError('Có lỗi xảy ra', {
@@ -78,8 +93,10 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             field: 'password',
         });
     }
+
     const user = _.pick(foundedUser, ['_id', 'name', 'email', 'role', 'phone', 'avatar', 'avatarRef']);
     const { accessToken } = await generateAuthTokens(foundedUser);
+
     return res.status(StatusCodes.ACCEPTED).json(
         customResponse({
             data: { ...user, accessToken },

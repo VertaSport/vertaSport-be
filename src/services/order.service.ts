@@ -76,7 +76,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     let totalPrice = req.body.totalPrice;
     let shippingFee = 0;
     let isVoucherForNewUser = false;
-    let discountType = '';
+    let discountType = 'fixed';
     if (req.body.shippingFee) {
         shippingFee = req.body.shippingFee;
     }
