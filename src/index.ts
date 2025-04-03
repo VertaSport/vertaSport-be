@@ -1,3 +1,4 @@
+import { checkOrderJob } from '@/job/orderJob';
 import app from './app';
 import connectDB from './config/database.config';
 import config from './config/env.config';
@@ -13,6 +14,7 @@ connectDB().then(async () => {
         // const ngrokUrl = await ngrok.connect({ addr: PORT, authtoken: process.env.NGROK_AUTHTOKEN });
 
         // await confirmWebhook(`${ngrokUrl}/webhook`);
+        checkOrderJob.start();
 
         console.log(`Listening to port ${PORT}`);
         // console.log(`Ingress established at: ${ngrokUrl}`);
