@@ -8,12 +8,12 @@ import { removeUploadedFile } from '@/utils/files';
 import mongoose, { Types } from 'mongoose';
 
 export const createProduct = async (dto: ICreateProduct, imageRefVariants: string[]) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // const session = await mongoose.startSession();
+    // session.startTransaction();
     try {
         const product = new Product(dto);
-        await product.save({ session });
-        await session.commitTransaction();
+        await product.save();
+        // await session.commitTransaction();
         return product;
     } catch (error) {
         await Promise.all([
@@ -21,48 +21,46 @@ export const createProduct = async (dto: ICreateProduct, imageRefVariants: strin
             ...imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)),
             Variant.deleteMany({ _id: { $in: dto.variants } }),
         ]);
-        await session.abortTransaction();
+        // await session.abortTransaction();
         throw new BadRequestError(error.message);
     } finally {
-        session.endSession();
+        // session.endSession();
     }
 };
 export const updateProduct = async (id: string, dto: any, variants: any, imageRefVariants: string[]) => {
-    const session = await mongoose.startSession();
+    // const session = await mongoose.startSession();
     try {
-        await session.withTransaction(async () => {
-            const variantIds: Types.ObjectId[] = [];
-            const filterColor: string[] = [];
-            const filterSize: string[] = [];
+        // await session.withTransaction(async () => {
+        const variantIds: Types.ObjectId[] = [];
+        const filterColor: string[] = [];
+        const filterSize: string[] = [];
 
-            for (const variant of variants) {
-                const variantId = variant._id ? new Types.ObjectId(variant._id) : new Types.ObjectId();
+        for (const variant of variants) {
+            const variantId = variant._id ? new Types.ObjectId(variant._id) : new Types.ObjectId();
 
-                variantIds.push(variantId);
+            variantIds.push(variantId);
 
-                if (variant._id) {
-                    await Variant.findByIdAndUpdate(variant._id, variant, { session });
-                } else {
-                    await Variant.create([{ ...variant, _id: variantId }], {
-                        session,
-                    });
-                }
-
-                filterColor.push(variant.color);
-                filterSize.push(variant.size);
+            if (variant._id) {
+                await Variant.findByIdAndUpdate(variant._id, variant);
+            } else {
+                await Variant.create([{ ...variant, _id: variantId }]);
             }
 
-            dto.variants = variantIds;
-            dto.filterColor = [...new Set(filterColor)];
-            dto.filterSize = [...new Set(filterSize)];
+            filterColor.push(variant.color);
+            filterSize.push(variant.size);
+        }
 
-            await Product.findByIdAndUpdate(id, dto, { session, new: true });
-        });
+        dto.variants = variantIds;
+        dto.filterColor = [...new Set(filterColor)];
+        dto.filterSize = [...new Set(filterSize)];
+
+        await Product.findByIdAndUpdate(id, dto, { new: true });
+        // });
     } catch (error) {
         await Promise.all(imageRefVariants.map((imageRef) => removeUploadedFile(imageRef)));
         throw new BadRequestError(error.message);
     } finally {
-        session.endSession();
+        // session.endSession();
     }
 };
 
