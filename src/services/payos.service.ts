@@ -17,7 +17,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 900) + 100));
     const { amount, items, cancelUrl, returnUrl } = req.body;
     const orderCode = Number(String(Date.now()).slice(-6));
-    const expireAt = 5 * 60; // 5 minutes
+    const expireAt = 2 * 60; // 5 minutes
     const voucherCode = req.body.voucherCode;
     const userId = req.userId;
     const shippingFee = req.body.shippingFee || 0;
@@ -44,6 +44,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         ...req.body,
         userId: userId,
         orderCode,
+        orderPaymentCode: orderCode,
         voucherCode,
         voucherName,
         voucherDiscount,
@@ -53,6 +54,24 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     });
 
     const saveOrder = await order.save();
+
+    paymentTimeoutId = setTimeout(async () => {
+        await Order.findOneAndUpdate(
+            {
+                _id: saveOrder._id,
+                isPaid: false,
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING,
+            },
+            {
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
+                orderStatus: ORDER_STATUS.CANCELLED,
+                description: 'Thời gian thanh toán đã hết hạn!',
+            },
+        );
+
+        await inventoryService.updateStockOnCancelOrder(items);
+        await voucherService.rollbackVoucher(voucherCode, userId);
+    }, expireAt * 1000);
 
     const body = {
         orderCode: orderCode,
@@ -67,27 +86,14 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const paymentLinkRes = await payOS.createPaymentLink(body);
 
     await inventoryService.updateStockOnCreateOrder(items);
+
     const now = new Date();
+
     if (currentUser.userIsOldWhen > now) {
         await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
     }
-    await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
 
-    paymentTimeoutId = setTimeout(async () => {
-        await Order.findOneAndUpdate(
-            {
-                _id: saveOrder._id,
-                isPaid: false,
-                orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING,
-            },
-            {
-                orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
-                orderStatus: ORDER_STATUS.CANCELLED,
-            },
-        );
-        await inventoryService.updateStockOnCancelOrder(items);
-        await voucherService.rollbackVoucher(voucherCode, userId);
-    }, expireAt * 1000);
+    await User.findByIdAndUpdate(userId, { $set: { userIsOldWhen: new Date() } });
 
     const data = {
         checkoutUrl: paymentLinkRes.checkoutUrl,
@@ -139,6 +145,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
                 {
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
+                    description: 'Thanh toán thành công!',
                 },
                 { new: true },
             );
@@ -176,6 +183,7 @@ export const updateStockCancelOrderPayos = async (req: Request, res: Response, n
         {
             orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
             orderStatus: ORDER_STATUS.CANCELLED,
+            description: 'Thanh toán thất bại!',
         },
     ).lean();
 

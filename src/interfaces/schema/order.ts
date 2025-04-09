@@ -25,7 +25,8 @@ export interface OrderSchema extends mongoose.Document {
     userId: mongoose.Schema.Types.ObjectId;
     items: ItemOrder[];
     totalPrice: number;
-    orderCode: number;
+    orderCode: string | number;
+    orderPaymentCode: number;
     tax: number;
     coupon: string;
     shippingFee: number;
