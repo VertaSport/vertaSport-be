@@ -9,6 +9,7 @@ import { ReasonPhrases, StatusCodes } from 'http-status-codes';
 import { inventoryService, voucherService } from '.';
 import config from '@/config/env.config';
 import User from '@/models/User';
+import { sendMail } from '@/utils/sendMail';
 
 const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
 let paymentTimeoutId: NodeJS.Timeout;
@@ -141,7 +142,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
         if (webhookData?.code === '00') {
             const orderCode = webhookData.orderCode;
             const foundedOrder = await Order.findOneAndUpdate(
-                { orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
+                { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
                 {
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
@@ -155,9 +156,49 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
 
             clearTimeout(paymentTimeoutId);
 
+            const foundedUser = await User.findById(foundedOrder.userId);
+
+            if (!foundedUser) {
+                throw new NotFoundError(`Không tìm thấy người dùng với ${foundedOrder.userId}`);
+            }
+
+            const template = {
+                content: {
+                    title: 'Đơn hàng mới của bạn',
+                    description: 'Bạn vừa mới đặt một đơn hàng từ VERTA SPORT dưới đây là sản phẩm bạn đã đặt:',
+                    email: foundedUser.email,
+                },
+                product: {
+                    items: foundedOrder.items,
+                    shippingfee: foundedOrder.shippingFee,
+                    totalPrice: foundedOrder.totalPrice,
+                },
+                subject: '[VERTAR SPORT] - Đơn hàng mới của bạn',
+                voucher: {
+                    name: foundedOrder.voucherCode,
+                    discount: foundedOrder.voucherDiscount,
+                    code: foundedOrder.voucherCode,
+                },
+                link: {
+                    linkHerf: `http://localhost:3000/account/my-orders/${foundedOrder._id}`,
+                    linkName: `Kiểm tra đơn hàng`,
+                },
+                user: {
+                    name: foundedUser.name,
+                    phone: foundedUser.phone,
+                    email: foundedUser.email,
+                    address: `[${foundedOrder.shippingAddress.address}] - ${foundedOrder.shippingAddress.ward}, ${foundedOrder.shippingAddress.district}, ${foundedOrder.shippingAddress.province}, Việt Nam`,
+                },
+            };
+
+            await sendMail({ email: foundedUser.email, template, type: 'UpdateStatusOrder' });
+
             await Promise.all(
                 foundedOrder.items.map(async (product: any) => {
-                    await Cart.updateOne({ userId: req.userId }, { $pull: { items: { product: product.productId } } });
+                    await Cart.updateOne(
+                        { userId: foundedOrder.userId },
+                        { $pull: { items: { product: product.productId } } },
+                    );
                 }),
             );
         }
@@ -191,9 +232,9 @@ export const updateStockCancelOrderPayos = async (req: Request, res: Response, n
         throw new NotFoundError(`${ReasonPhrases.NOT_FOUND} order with id: ${req.body.orderId}`);
     }
 
-    clearTimeout(paymentTimeoutId);
-
     await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
+
+    clearTimeout(paymentTimeoutId);
 
     return res
         .status(StatusCodes.OK)

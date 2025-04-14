@@ -233,7 +233,7 @@ export const templateMail = (template: Template, mailContent: Content) => {
               ${
                   mailContent.voucher &&
                   `<p style="margin: 0; color: #34495e; font-size: 14px;">
-                  <strong>Mã giảm giá ${mailContent.voucher?.code}:</strong>
+                  <strong>Mã giảm giá ${mailContent.voucher?.code ? mailContent.voucher?.code : ''}:</strong>
                   <span style="color: #2980b9; font-weight: bold;">
                       ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(mailContent.voucher?.discount || 0)}
                   </span>
