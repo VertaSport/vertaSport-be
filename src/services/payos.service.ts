@@ -22,7 +22,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 900) + 100));
     const { amount, items, cancelUrl, returnUrl } = req.body;
     const orderCode = Number(String(Date.now()).slice(-6));
-    const expireAt = 2 * 60; // 5 minutes
+    const expireAt = 5 * 60; // 5 minutes
     const voucherCode = req.body.voucherCode;
     const userId = req.userId;
     const shippingFee = req.body.shippingFee || 0;
@@ -163,12 +163,6 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
 
             if (!foundedOrder) {
                 throw new NotFoundError(`Không tìm thấy đơn hàng với order code ${orderCode}`);
-            }
-
-            const foundedCancelOrderTimeOut = orderPaymentTimeoutId.find((item) => item.orderId === foundedOrder._id);
-
-            if (foundedCancelOrderTimeOut) {
-                clearTimeout(foundedCancelOrderTimeOut.timeoutId);
             }
 
             const foundedUser = await User.findById(foundedOrder.userId);
