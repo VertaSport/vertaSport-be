@@ -12,7 +12,11 @@ import User from '@/models/User';
 import { sendMail } from '@/utils/sendMail';
 
 const payOS = new PayOS(config.payos.clientId, config.payos.apiKey, config.payos.checksumKey);
-let paymentTimeoutId: NodeJS.Timeout;
+type orderPaymentTimeout = {
+    timeoutId: NodeJS.Timeout;
+    orderId: string;
+};
+const orderPaymentTimeoutId: orderPaymentTimeout[] = [];
 
 export const createPayOsPayment = async (req: Request, res: Response, next: NextFunction) => {
     await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 900) + 100));
@@ -56,7 +60,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
 
     const saveOrder = await order.save();
 
-    paymentTimeoutId = setTimeout(async () => {
+    const paymentTimeoutId = setTimeout(async () => {
         await Order.findOneAndUpdate(
             {
                 _id: saveOrder._id,
@@ -73,6 +77,12 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         await inventoryService.updateStockOnCancelOrder(items);
         await voucherService.rollbackVoucher(voucherCode, userId);
     }, expireAt * 1000);
+
+    orderPaymentTimeoutId.push({
+        orderId: saveOrder._id,
+        timeoutId: paymentTimeoutId,
+    });
+
 
     const body = {
         orderCode: orderCode,
@@ -150,11 +160,16 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
                 },
                 { new: true },
             );
+
             if (!foundedOrder) {
                 throw new NotFoundError(`Không tìm thấy đơn hàng với order code ${orderCode}`);
             }
 
-            clearTimeout(paymentTimeoutId);
+            const foundedCancelOrderTimeOut = orderPaymentTimeoutId.find((item) => item.orderId === foundedOrder._id);
+
+            if (foundedCancelOrderTimeOut) {
+                clearTimeout(foundedCancelOrderTimeOut.timeoutId);
+            }
 
             const foundedUser = await User.findById(foundedOrder.userId);
 
@@ -201,6 +216,15 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
                     );
                 }),
             );
+
+            const foundedOrderTimeOut = orderPaymentTimeoutId.findIndex((timeoutItem) => {
+                return timeoutItem.orderId === foundedOrder._id;
+            });
+
+            if (foundedOrderTimeOut !== -1) {
+                clearTimeout(orderPaymentTimeoutId?.[foundedOrderTimeOut].timeoutId);
+                orderPaymentTimeoutId.splice(foundedOrderTimeOut, 1);
+            }
         }
     }
     return res.status(StatusCodes.OK).json(
@@ -234,7 +258,14 @@ export const updateStockCancelOrderPayos = async (req: Request, res: Response, n
 
     await inventoryService.updateStockOnCancelOrder(foundedOrder.items);
 
-    clearTimeout(paymentTimeoutId);
+    const foundedOrderTimeOut = orderPaymentTimeoutId.findIndex((timeoutItem) => {
+        return timeoutItem.orderId === foundedOrder._id;
+    });
+
+    if (foundedOrderTimeOut !== -1) {
+        clearTimeout(orderPaymentTimeoutId?.[foundedOrderTimeOut].timeoutId);
+        orderPaymentTimeoutId.splice(foundedOrderTimeOut, 1);
+    }
 
     return res
         .status(StatusCodes.OK)
