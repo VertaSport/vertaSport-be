@@ -70,6 +70,7 @@ export const deleteProduct = async (id: string) => {
 };
 
 export const getAllProducts = async (queryString: QueryString) => {
+    console.log('qs', queryString);
     const features = new APIQuery(
         Product.find()
             .populate({
@@ -91,6 +92,7 @@ export const getAllProducts = async (queryString: QueryString) => {
     );
     features.filter().sort().limitFields().search().paginate();
     const [data, totalDocs] = await Promise.all([features.query, features.count()]);
+
     const newData = data.map((product: any) => {
         const groupedByColor = (
             product.variants as {

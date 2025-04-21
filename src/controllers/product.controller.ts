@@ -98,8 +98,8 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
     const query: QueryString = { isDeleted: false, isHide: false, ...req.query };
     const page = req.query.page ? +req.query.page : 1;
     const limit = req.query.limit || 10;
-    const filterSize = req.query.size ? (req.query.size as string).split(',') : null;
-    const filterColor = req.query.color ? (req.query.color as string).split(',') : null;
+    const filterSize = req.query.size ? { $in: (req.query.size as string).split(',') } : null;
+    const filterColor = req.query.color ? { $in: (req.query.color as string).split(',') } : null;
 
     query.page = String(page);
     query.limit = String(limit);
@@ -112,7 +112,7 @@ export const getAllProductsClient = asyncHandler(async (req: Request, res: Respo
 
     delete query.size;
     delete query.color;
-    query.fields = '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt,-isHide';
+    query.fields = '-isHide,-filterSize,-filterColor,-isDeleted,-createdAt,-updatedAt';
 
     const products = await productService.getAllProducts(query);
 

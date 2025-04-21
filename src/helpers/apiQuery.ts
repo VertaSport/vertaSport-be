@@ -31,6 +31,7 @@ class APIQuery<T extends Document> {
         const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
         excludedFields.forEach((el) => delete queryObj[el]);
         // Remove 'raw' fields from queryObj (remove manual fields)
+        console.log(queryObj);
         Object.keys(queryObj).forEach((el) => {
             if (el.includes('raw')) {
                 delete queryObj[el];
@@ -42,7 +43,6 @@ class APIQuery<T extends Document> {
             }
         });
         let queryStr = JSON.stringify(queryObj);
-        console.log(queryStr);
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
         this.query = this.query.find(JSON.parse(queryStr));
