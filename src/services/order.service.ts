@@ -127,7 +127,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             code: order.voucherCode,
         },
         link: {
-            linkHerf: `http://localhost:3000/my-orders/${order._id}`,
+            linkHerf: `http://localhost:3000/account/my-orders/${order._id}`,
             linkName: `Kiểm tra đơn hàng`,
         },
         user: {
@@ -235,7 +235,7 @@ export const cancelOrder = async (req, res, next) => {
             },
             subject: '[Verta-Sport] - Đơn hàng của bạn đã bị hủy',
             link: {
-                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkHerf: `http://localhost:3000/account/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             voucher: {
@@ -314,7 +314,7 @@ export const confirmOrder = async (req, res, next) => {
             },
             subject: '[VertaSport] - Đơn hàng của bạn đã được xác nhận',
             link: {
-                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkHerf: `http://localhost:3000/account/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             voucher: {
@@ -395,7 +395,7 @@ export const shippingOrder = async (req, res, next) => {
             },
             subject: '[Verta-Sport] - Đơn hàng của bạn đang được giao',
             link: {
-                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkHerf: `http://localhost:3000/account/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             voucher: {
@@ -480,7 +480,7 @@ export const deliverOrder = async (req, res, next) => {
             },
             subject: '[Verta-Sport] - Đơn hàng của bạn đã được giao thành công',
             link: {
-                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkHerf: `http://localhost:3000/account/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             user: {
@@ -550,7 +550,7 @@ export const finishOrder = async (req, res, next) => {
             },
             subject: '[Verta-Sport] - Đơn hàng của bạn đã hoàn thành',
             link: {
-                linkHerf: `http://localhost:3000/my-orders/${req.body.orderId}`,
+                linkHerf: `http://localhost:3000/account/my-orders/${req.body.orderId}`,
                 linkName: `Kiểm tra đơn hàng`,
             },
             voucher: {
