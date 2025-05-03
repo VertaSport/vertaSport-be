@@ -65,7 +65,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
             {
                 _id: saveOrder._id,
                 isPaid: false,
-                orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING,
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.CONFIRMED,
             },
             {
                 orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
@@ -152,7 +152,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
         if (webhookData?.code === '00') {
             const orderCode = webhookData.orderCode;
             const foundedOrder = await Order.findOneAndUpdate(
-                { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
+                { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED},
                 {
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,

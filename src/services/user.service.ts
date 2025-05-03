@@ -250,7 +250,7 @@ export const unbanUser = async (req: Request, res: Response, next: NextFunction)
             email: user.email,
         },
         link: {
-            linkHerf: 'http://localhost:3000/login',
+            linkHerf: 'http://localhost:3000/auth',
             linkName: 'Đăng Nhập Ngay',
         },
         subject: '[Verta-Sport] - Tài Khoản Của Bạn Đã Được Mở Khóa',

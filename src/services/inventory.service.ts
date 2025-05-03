@@ -17,7 +17,12 @@ export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
             if (variant.stock < item.quantity) {
                 throw new BadRequestError(`Số lượng đặt hàng cho sản phẩm ${item.name} vượt quá số lượng tồn kho!`);
             }
-            return Variant.updateOne(
+            await Product.findByIdAndUpdate(item.productId, {
+                $inc: {
+                    sold: item.quantity,
+                },
+            })
+            return await Variant.updateOne(
                 { _id: item.variantId },
                 {
                     $inc: {
@@ -33,6 +38,11 @@ export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
 export const updateStockOnCancelOrder = async (dataItems: ItemOrder[]) => {
     return await Promise.all(
         dataItems.map(async (item: ItemOrder) => {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: {
+                sold: -item.quantity,
+            },
+        })
             await Variant.updateOne(
                 { _id: item.variantId },
                 {
@@ -77,14 +87,14 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
     });
 
     if (isOutOfStock) {
-        throw new NotAcceptableError('Sản phẩm đã hết hàng');
+throw new NotAcceptableError('Sản phẩm đã hết hàng');
     }
 
     if (isHidedProduct) {
-        throw new NotAcceptableError('Sản phẩm đã không tồn tại');
+        throw new NotAcceptableError('Sản phẩm không tồn tại');
     }
 
     if (isDeletedProduct) {
-        throw new NotAcceptableError('Sản phẩm đã không tồn tại');
+        throw new NotAcceptableError('Sản phẩm không tồn tại');
     }
 };
