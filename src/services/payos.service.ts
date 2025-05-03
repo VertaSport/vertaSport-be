@@ -25,14 +25,13 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const expireAt = 5 * 60; // 5 minutes
     const voucherCode = req.body.voucherCode;
     const userId = req.userId;
-    const shippingFee = req.body.shippingFee || 0;
-    const totalPriceNoShip = req.body.totalPrice - shippingFee;
+    const totalPriceNoShip = req.body.totalPrice - 30000;
     let totalPrice = totalPriceNoShip;
     let discountType = 'fixed';
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
-        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount, shippingFee);
+        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount, 30000);
         voucherName = voucherData.voucherName;
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
@@ -65,7 +64,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
             {
                 _id: saveOrder._id,
                 isPaid: false,
-                orderPaymentStatus: ORDER_PAYMENT_STATUS.CONFIRMED,
+                orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING,
             },
             {
                 orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED,
@@ -152,7 +151,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
         if (webhookData?.code === '00') {
             const orderCode = webhookData.orderCode;
             const foundedOrder = await Order.findOneAndUpdate(
-                { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.CANCELLED},
+                { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
                 {
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
