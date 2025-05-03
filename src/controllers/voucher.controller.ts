@@ -144,8 +144,8 @@ export const updateVoucher = asyncHandler(async (req: Request, res: Response) =>
         throw new BadRequestError('Số lần sử dụng mỗi người phải lớn hơn 0');
     }
 
-    if (new Date(startDate) < currentDate || new Date(endDate) < currentDate) {
-        throw new BadRequestError('Ngày bắt đầu và ngày kết thúc phải sau ngày hiện tại');
+    if (new Date(endDate) < currentDate) {
+        throw new BadRequestError('Ngày kết thúc phải sau ngày hiện tại');
     }
 
     if (new Date(startDate) >= new Date(endDate)) {

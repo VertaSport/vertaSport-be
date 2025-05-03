@@ -31,7 +31,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
-        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, amount, 30000);
+        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, totalPrice, 30000);
         voucherName = voucherData.voucherName;
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
@@ -81,7 +81,6 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         orderId: saveOrder._id,
         timeoutId: paymentTimeoutId,
     });
-
 
     const body = {
         orderCode: orderCode,
