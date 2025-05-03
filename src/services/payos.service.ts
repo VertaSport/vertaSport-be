@@ -84,7 +84,7 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
 
     const body = {
         orderCode: orderCode,
-        amount,
+        amount: totalPrice,
         description: `Thanh toan don hang`,
         items,
         expiredAt: Math.floor(Date.now() / 1000) + expireAt,
