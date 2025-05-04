@@ -25,19 +25,23 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
     const expireAt = 5 * 60; // 5 minutes
     const voucherCode = req.body.voucherCode;
     const userId = req.userId;
-    const totalPriceNoShip = req.body.totalPrice - 30000;
-    let totalPrice = totalPriceNoShip;
+    const shippingFee = req.body.shippingFee || 30000;
+    const totalPriceNoShip = req.body.totalPrice - shippingFee;
+    let totalPrice = req.body.totalPrice;
     let discountType = 'fixed';
     let voucherName = '';
     let voucherDiscount = 0;
     if (voucherCode) {
-        const voucherData = await voucherService.checkVoucherIsValid(voucherCode, userId, totalPrice, 30000);
+        const voucherData = await voucherService.checkVoucherIsValid(
+            voucherCode,
+            userId,
+            totalPriceNoShip,
+            shippingFee,
+        );
         voucherName = voucherData.voucherName;
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
         discountType = voucherData.discountType;
-    } else {
-        totalPrice = totalPriceNoShip + 30000;
     }
 
     const currentUser = await User.findById(userId);
