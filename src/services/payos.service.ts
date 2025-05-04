@@ -36,6 +36,8 @@ export const createPayOsPayment = async (req: Request, res: Response, next: Next
         voucherDiscount = voucherData.voucherDiscount;
         totalPrice = voucherData.totalPrice;
         discountType = voucherData.discountType;
+    } else {
+        totalPrice = totalPriceNoShip + 30000;
     }
 
     const currentUser = await User.findById(userId);
