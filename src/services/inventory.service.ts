@@ -21,7 +21,7 @@ export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
                 $inc: {
                     sold: item.quantity,
                 },
-            })
+            });
             return await Variant.updateOne(
                 { _id: item.variantId },
                 {
@@ -38,11 +38,11 @@ export const updateStockOnCreateOrder = async (dataItems: ItemOrder[]) => {
 export const updateStockOnCancelOrder = async (dataItems: ItemOrder[]) => {
     return await Promise.all(
         dataItems.map(async (item: ItemOrder) => {
-          await Product.findByIdAndUpdate(item.productId, {
-            $inc: {
-                sold: -item.quantity,
-            },
-        })
+            await Product.findByIdAndUpdate(item.productId, {
+                $inc: {
+                    sold: -item.quantity,
+                },
+            });
             await Variant.updateOne(
                 { _id: item.variantId },
                 {
@@ -87,7 +87,7 @@ export const checkProductStatus = async (items: ItemOrder[]) => {
     });
 
     if (isOutOfStock) {
-throw new NotAcceptableError('Sản phẩm đã hết hàng');
+        throw new NotAcceptableError('Sản phẩm đã hết hàng');
     }
 
     if (isHidedProduct) {
