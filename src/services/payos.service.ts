@@ -158,6 +158,7 @@ export const HandlePayOsWebhook = async (req: Request, res: Response, next: Next
             const foundedOrder = await Order.findOneAndUpdate(
                 { orderPaymentCode: orderCode, isPaid: false, orderPaymentStatus: ORDER_PAYMENT_STATUS.PENDING },
                 {
+                    orderStatus: ORDER_STATUS.CONFIRMED,
                     isPaid: true,
                     orderPaymentStatus: ORDER_PAYMENT_STATUS.SUCCESSED,
                     description: 'Thanh toán thành công!',
